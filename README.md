@@ -8,7 +8,7 @@ TownforgeR parses the input JSON according to the web app, and the returned JSON
 
 It comes with an R Shiny interface, i.e. a graphical web browser, in addition to the base R functionality.
 
-Some examples codes
+Some example TownforgeR code run in a base R terminal and launching the built web app:
 
 
 \> library(TownforgeR)
