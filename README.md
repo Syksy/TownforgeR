@@ -10,6 +10,9 @@ It comes with an R Shiny interface, i.e. a graphical web browser, in addition to
 
 Some examples codes
 
+
 \> library(TownforgeR)
+
 \> TownforgeR::tf_rpc_curl(method="get_block_count") # Curl the RPC with the method "get_block_count", assuming URL to be 127.0.0.1:18881
+
 \> TownforgeR::shinyTF() # Launch the R Shiny interface in the default browser
