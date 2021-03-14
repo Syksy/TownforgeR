@@ -4,7 +4,7 @@ An R-package for interacting with the Townforge blockchain
 Read more about Townforge at: www.townforge.net
 
 Townforge is a blockchain based game forked originally from the Monero project (https://github.com/monero-project).
-This is package written for the R statistical software language, which curls the Townforge RPC commands, extracts information from the daemon. 
+This is a package written for the R statistical software language, for curl'ing the Townforge RPC commands and interacting with the daemon. 
 TownforgeR parses the input JSON according to the web app, and the returned JSON into R-compatible lists and data frames.
 
 It comes with an R Shiny interface, i.e. a graphical web browser, in addition to the base R functionality.
