@@ -66,3 +66,56 @@ tf_parse_accounts <- function(
 		})
 	)
 }
+
+#' tf_parse_network
+#'
+#' Creates verbatim output string that describes Townforge network status
+#'
+#' @export
+tf_parse_network <- function(
+	# RPC command for getting Townforge network info
+	get_info = 'get_info'
+){
+	# Line change
+	cat("\n")
+	info <- TownforgeR::tf_rpc_curl(method=get_info)$result
+	# Omit id and jsonrpc
+	info <- info[-c(1:2)]
+	# Parse rest into suitable fields
+	cat(paste(paste(names(info), ":", info), collapse="\n"))
+	# Line change
+	cat("\n")
+}
+
+#' tf_parse_items
+#'
+#' Description
+#'
+#' @export
+tf_parse_items <- function(
+
+){
+
+}
+
+#' tf_parse_market
+#'
+#' Description
+#'
+#' @export
+tf_parse_market <- function(
+
+){
+
+}
+
+#' tf_parse_nfts
+#'
+#' Description
+#'
+#' @export
+tf_parse_nfts <- function(
+
+){
+
+}

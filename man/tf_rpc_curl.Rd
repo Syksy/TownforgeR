@@ -11,6 +11,12 @@ tf_rpc_curl(
   ...
 )
 }
+\arguments{
+\item{method}{One of: '}
+}
 \description{
 Description
+}
+\details{
+A list of RPC commands compatible with Townforge (v0.27.0.7 at the time of writing this) is available via Python code in https://git.townforge.net/townforge/townforge/src/branch/cc/utils/python-rpc/framework/daemon.py
 }

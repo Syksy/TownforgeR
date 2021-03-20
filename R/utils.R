@@ -4,7 +4,6 @@
 #
 ###
 
-
 #' Prune a list with NULL elements, removing them along with their names
 #'
 #' Description
@@ -15,7 +14,7 @@ pruneList <- function(l){
 #' Collapse a nested character list into a character string 'varname=123;othervar=foo', 'varname=0;othervar=bar', ...
 #' 
 #' Description
-parseNest <- function(x, symbol1 = '=', symbol2 = ',', symbol3 = ';') { 
+parseNest <- function(x, symbol1 = '=', symbol2 = ',', symbol3 = ';'){ 
 	paste(
 		unlist(
 			lapply(x, FUN=function(z){ 
@@ -26,5 +25,7 @@ parseNest <- function(x, symbol1 = '=', symbol2 = ',', symbol3 = ';') {
 				, collapse=symbol2)
 			})
 		)
-	, collapse=symbol3) 
+	, collapse=symbol3)
 }
+
+

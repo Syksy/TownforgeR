@@ -2,6 +2,10 @@
 
 export(serverTF)
 export(shinyTF)
-export(tf_rpc_curl)
 export(tf_parse_accounts)
+export(tf_parse_items)
+export(tf_parse_market)
+export(tf_parse_network)
+export(tf_parse_nfts)
+export(tf_rpc_curl)
 export(uiTF)
