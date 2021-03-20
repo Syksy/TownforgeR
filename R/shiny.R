@@ -16,7 +16,7 @@ shinyTF <- function(){
 #' Description
 #'
 #' @export
-uiTF <- shiny::navbarPage("TownforgeR",
+uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("TownforgeR"))),
 	shiny::tabPanel("Raw commands",
 		shiny::sidebarLayout(
 		#textInput("method", "Selected TF RPC method name"),
@@ -49,6 +49,9 @@ uiTF <- shiny::navbarPage("TownforgeR",
 	),
 	shiny::tabPanel("Markets",
 		DT::dataTableOutput("marketsDT")
+	),
+	shiny::tabPanel("NFTs",
+		DT::dataTableOutput("nftsDT")
 	),
 	shiny::tabPanel("Network",
 		shiny::verbatimTextOutput("network")
@@ -91,6 +94,9 @@ serverTF <- function(input, output){
 	})
 	output$marketsDT <- DT::renderDataTable({
 		TownforgeR::tf_parse_markets()	
+	})
+	output$nftsDT <- DT::renderDataTable({
+		TownforgeR::tf_parse_nfts()	
 	})
 	output$network <- shiny::renderPrint({ 
 		TownforgeR::tf_parse_network()

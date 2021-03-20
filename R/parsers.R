@@ -104,6 +104,7 @@ tf_parse_items <- function(
 #'
 #' @export
 tf_parse_markets <- function(
+	# RPC command for extracting market orders in the tx pool
 	get_order_book = "cc_get_order_book"
 ){
 	markets <- do.call("rbind", 
@@ -112,6 +113,7 @@ tf_parse_markets <- function(
 			FUN = as.data.frame
 		)
 	)
+	markets
 }
 
 #' tf_parse_nfts
@@ -120,7 +122,25 @@ tf_parse_markets <- function(
 #'
 #' @export
 tf_parse_nfts <- function(
-
+	# RPC command for extracting custom items
+	get_custom_items = "cc_get_custom_items",
+	# Character count to truncate strings to avoid extremely lengthy columns
+	truncate_char = 80
 ){
-
+	nfts <- do.call("rbind", 
+		lapply(
+			TownforgeR::tf_rpc_curl(method=get_custom_items)$result$items, 
+			FUN=function(z) { unlist(z)[c("id","name","creator","amount","creation_height","name","pdesc")] }
+		)
+	)
+	nfts <- as.data.frame(
+		apply(
+			nfts, MARGIN=2, 
+			FUN=function(str) 
+			{ 
+				ifelse(nchar(str) > truncate_char, paste0(substring(str, 1, truncate_char-3), "..."), str) 
+			}
+		)
+	)
+	nfts	
 }
