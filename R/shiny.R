@@ -47,6 +47,9 @@ uiTF <- shiny::navbarPage("TownforgeR",
 	shiny::tabPanel("Accounts",
 		DT::dataTableOutput("accountsDT")
 	),
+	shiny::tabPanel("Markets",
+		DT::dataTableOutput("marketsDT")
+	),
 	shiny::tabPanel("Network",
 		shiny::verbatimTextOutput("network")
 	)			
@@ -85,6 +88,9 @@ serverTF <- function(input, output){
 	})
 	output$accountsDT <- DT::renderDataTable({
 		TownforgeR::tf_parse_accounts()	
+	})
+	output$marketsDT <- DT::renderDataTable({
+		TownforgeR::tf_parse_markets()	
 	})
 	output$network <- shiny::renderPrint({ 
 		TownforgeR::tf_parse_network()

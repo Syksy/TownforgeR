@@ -98,15 +98,20 @@ tf_parse_items <- function(
 
 }
 
-#' tf_parse_market
+#' tf_parse_markets
 #'
 #' Description
 #'
 #' @export
-tf_parse_market <- function(
-
+tf_parse_markets <- function(
+	get_order_book = "cc_get_order_book"
 ){
-
+	markets <- do.call("rbind", 
+		lapply(
+			TownforgeR::tf_rpc_curl(method=get_order_book, params=list("bids"=TRUE, "offers"=TRUE))$result$offers,
+			FUN = as.data.frame
+		)
+	)
 }
 
 #' tf_parse_nfts

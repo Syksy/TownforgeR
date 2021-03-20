@@ -14,18 +14,21 @@ pruneList <- function(l){
 #' Collapse a nested character list into a character string 'varname=123;othervar=foo', 'varname=0;othervar=bar', ...
 #' 
 #' Description
-parseNest <- function(x, symbol1 = '=', symbol2 = ',', symbol3 = ';'){ 
+parseNest <- function(x){ 
 	paste(
 		unlist(
 			lapply(x, FUN=function(z){ 
+				# If values are named, send these separated value names inside the string
+				if(length(names(z))>0) nam <- names(z)
+				# Unnamed values are just called 'value'
+				else nam <- "value"
+				# Paste names and corresponding actual content
 				paste(
-					paste(
-						ifelse(length(names(z))>0, names(z), "value")
-					, z, sep=symbol1)
-				, collapse=symbol2)
+					paste(nam, z, sep="="), 
+				collapse=",")
 			})
-		)
-	, collapse=symbol3)
+		), 
+	collapse=";")
 }
 
 

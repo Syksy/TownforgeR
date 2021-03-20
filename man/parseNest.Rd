@@ -4,7 +4,7 @@
 \alias{parseNest}
 \title{Collapse a nested character list into a character string 'varname=123;othervar=foo', 'varname=0;othervar=bar', ...}
 \usage{
-parseNest(x, symbol1 = "=", symbol2 = ",", symbol3 = ";")
+parseNest(x)
 }
 \description{
 Description
