@@ -16,31 +16,37 @@ shinyTF <- function(){
 #' Description
 #'
 #' @export
-uiTF <- shiny::fluidPage(
-	shiny::h2("TownforgeR R-shiny app"),
-	shiny::sidebarLayout(
-	#textInput("method", "Selected TF RPC method name"),
-		shiny::selectInput("command", label="Select a TF RPC command", 
-			choices = c(
-				"get_block_count", # Get current blockchain height
-				#"mining_status", # Get daemon mining status
-				"cc_get_account",
-				"cc_get_accounts",
-				"cc_get_cities",
-				"cc_get_flag",
-				"cc_get_flags",
-				"cc_get_shares",
-				"cc_get_last_update_events",
-				"cc_get_discoveries",
-				"cc_get_temperature",
-				"cc_find_flag"
+uiTF <- shiny::navbarPage("TownforgeR",
+	shiny::tabPanel("Raw commands",
+		shiny::sidebarLayout(
+		#textInput("method", "Selected TF RPC method name"),
+			shiny::sidebarPanel(
+				shiny::selectInput("command", label="Select a TF RPC command", 
+					choices = c(
+						"get_block_count", # Get current blockchain height
+						#"mining_status", # Get daemon mining status
+						"cc_get_account",
+						"cc_get_accounts",
+						"cc_get_cities",
+						"cc_get_flag",
+						"cc_get_flags",
+						"cc_get_shares",
+						"cc_get_last_update_events",
+						"cc_get_discoveries",
+						"cc_get_temperature",
+						"cc_find_flag"
+					)
+				),
+				shiny::uiOutput("pars")
+			),
+			shiny::mainPanel(
+				shiny::verbatimTextOutput("verb")
 			)
-		),
-		shiny::uiOutput("pars")
+		)
 	),
-	shiny::mainPanel(
-		shiny::verbatimTextOutput("verb")
-	)
+	shiny::tabPanel("Accounts",
+		DT::dataTableOutput("accountsDT")
+	)			
 )
 
 #' Shiny server side
@@ -74,12 +80,7 @@ serverTF <- function(input, output){
 			)
 		)
 	})
-}
-
-
-#' Prune a list with NULL elements, removing them along with their names
-#'
-#' Description
-pruneList <- function(l){
-	l[!lengths(l)==0]
+	output$accountsDT <- DT::renderDataTable({
+		TownforgeR::tf_parse_accounts()	
+	})
 }

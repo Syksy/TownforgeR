@@ -1,9 +1,11 @@
 Package: TownforgeR
 Title: R-package for handling Townforge related data
-Version: 0.0.2
+Version: 0.0.3
 Authors@R: person("Teemu Daniel", "Laajala", email = "teelaa@utu.fi",
 		role = c("aut", "cre"))
-Description: R-package for handling e.g. RPC interaction with the blockchain-based game Townforge, originally forked from Monero. See: www.townforge.net
+Description: R-package for handling e.g. RPC interaction with the blockchain-based game Townforge, originally forked from Monero. 
+	Contains a self-sufficient R Shiny web interface for user convenience. 
+	Regarding Townforge, see further info at: www.townforge.net
 Depends: R (>= 4.0.0)
 License: GPL-3
 LazyData: true
@@ -12,4 +14,5 @@ Encoding: UTF-8
 Imports:
 	RCurl,
 	RJSONIO,
-	shiny
+	shiny,
+	DT

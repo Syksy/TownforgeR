@@ -35,7 +35,7 @@ tf_parse_accounts <- function(
 	# Vector of account parameters that contain nested lists and require further parsing
 	fields_nests = c('flags','item_balances','badges'),	
 	# A function that parses a nested list into a single character string
-	collapse_fun = function(x) { paste(unlist(lapply(x, FUN=function(z) { paste(paste(ifelse(length(names(z))>0, names(z), "value"), z, sep='='), collapse=',') })), collapse=";") },
+	collapse_fun = TownforgeR:::parseNest,
 	# If collapsed_fun produces a character count above truncation limit, cut it and add '...' at the end
 	truncate_char = 40,
 	# Additional parameters
