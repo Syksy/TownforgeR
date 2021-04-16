@@ -1,21 +1,9 @@
 # Definitions for the TownforgeR web interface 
 # cheat-sheet: https://shiny.rstudio.com/images/shiny-cheatsheet.pdf
 
-#' Launch TownforgeR shiny app
-#'
-#' Description
-#'
-#' @export
-shinyTF <- function(){
-	app <- shiny::shinyApp(ui = TownforgeR::uiTF, server = TownforgeR::serverTF)
-	shiny::runApp(app)
-}
-
 #' Shiny UI for browser
 #'
 #' Description
-#'
-#' @export
 uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("TownforgeR"))),
 	shiny::tabPanel("Raw commands",
 		shiny::sidebarLayout(
@@ -55,14 +43,29 @@ uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("To
 	),
 	shiny::tabPanel("Network",
 		shiny::verbatimTextOutput("network")
-	)			
+	),
+	shiny::tabPanel("Inspect",
+		shiny::tabsetPanel(type = "tabs",
+			shiny::tabPanel("NFTs",
+				shiny::sidebarLayout(
+					shiny::sidebarPanel(
+						"nft"
+					),
+					shiny::mainPanel(
+						htmlOutput("inspect")
+					)
+				)
+			),
+			shiny::tabPanel("Blocks",
+				"foo"
+			)
+		)
+	)
 )
 
 #' Shiny server side
 #'
 #' Description
-#'
-#' @export
 serverTF <- function(input, output){
 	output$pars <- shiny::renderUI({
 		if(input$command %in% c("cc_get_account")){
@@ -101,4 +104,20 @@ serverTF <- function(input, output){
 	output$network <- shiny::renderPrint({ 
 		TownforgeR::tf_parse_network()
 	})
+	output$inspect <- shiny::renderText({
+		#TownforgeR::tf_shiny_nft_png()
+		tf_shiny_nft_png()
+	})
 }
+
+#' Launch TownforgeR shiny app
+#'
+#' Description
+#'
+#' @export
+shinyTF <- function(){
+	#app <- shiny::shinyApp(ui = TownforgeR::uiTF, server = TownforgeR::serverTF)
+	app <- shiny::shinyApp(ui = uiTF, server = serverTF)
+	shiny::runApp(app)
+}
+

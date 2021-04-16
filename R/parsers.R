@@ -70,6 +70,8 @@ tf_parse_accounts <- function(
 #' tf_parse_network
 #'
 #' Creates verbatim output string that describes Townforge network status
+#' 
+#' @param get_info TODO
 #'
 #' @export
 tf_parse_network <- function(
@@ -102,6 +104,8 @@ tf_parse_items <- function(
 #'
 #' Description
 #'
+#' @param get_order_book TODO
+#'
 #' @export
 tf_parse_markets <- function(
 	# RPC command for extracting market orders in the tx pool
@@ -120,6 +124,9 @@ tf_parse_markets <- function(
 #'
 #' Description
 #'
+#' @param get_custom_items TODO
+#' @param truncate_char TODO
+#'
 #' @export
 tf_parse_nfts <- function(
 	# RPC command for extracting custom items
@@ -130,7 +137,7 @@ tf_parse_nfts <- function(
 	nfts <- do.call("rbind", 
 		lapply(
 			TownforgeR::tf_rpc_curl(method=get_custom_items)$result$items, 
-			FUN=function(z) { unlist(z)[c("id","name","creator","amount","creation_height","name","pdesc")] }
+			FUN=function(z) { unlist(z)[c("id","name","creator","amount","creation_height","name","pdesc","hash","ipfs_multihash")] }
 		)
 	)
 	nfts <- as.data.frame(
@@ -144,3 +151,40 @@ tf_parse_nfts <- function(
 	)
 	nfts	
 }
+
+#' tf_parse_nft_png
+#'
+#' Description
+#'
+#' @param
+#'
+#' @export
+tf_parse_nft_png <- function(
+	item_hash,
+	# Expected block storage count to save image at TF's IPFS rather than ipfs.io; after certain time query on ipfs.io, before try TF's ipfs
+	# By default NFT data is contained for 2.5 days on TF's IPFS at the time of writing this
+	storage_blocks = 2.5*24*60 
+){
+	png <- RCurl::getBinaryURL(paste0("https://ipfs.townforge.net/ipfs/", item_hash), httpheader = "image/png", ssl.verifypeer = FALSE)
+	writeBin(png, con = tf <- tempfile(fileext = ".png"))
+	shell.exec(tf)	
+}
+
+
+###
+#
+# R Shiny related parsers
+#
+###
+
+
+#' tf_shiny_nft_png
+tf_shiny_nft_png <- function(
+	item_hash = "QmPcSrvw8HZuWR4zYDnPTzD1DcXAw4mGxkeBdoKP6h9hQa",
+	# Expected block storage count to save image at TF's IPFS rather than ipfs.io; after certain time query on ipfs.io, before try TF's ipfs
+	# By default NFT data is contained for 2.5 days on TF's IPFS at the time of writing this
+	storage_blocks = 2.5*24*60 
+){
+	paste0('<img src="https://ipfs.townforge.net/ipfs/',item_hash,'">')
+}
+
