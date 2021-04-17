@@ -6,6 +6,9 @@
 \usage{
 tf_parse_network(get_info = "get_info")
 }
+\arguments{
+\item{get_info}{TODO}
+}
 \description{
 Creates verbatim output string that describes Townforge network status
 }

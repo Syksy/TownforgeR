@@ -31,4 +31,11 @@ parseNest <- function(x){
 	collapse=";")
 }
 
-
+#' Format NFTs in a nice character string
+#'
+#' Description
+formatNFTs <- function()
+{
+	items <- TownforgeR::tf_parse_nfts()
+	paste(items$id, ":", items$name)
+}

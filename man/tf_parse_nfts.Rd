@@ -4,7 +4,12 @@
 \alias{tf_parse_nfts}
 \title{tf_parse_nfts}
 \usage{
-tf_parse_nfts(get_custom_items = "cc_get_custom_items", truncate_char = 50)
+tf_parse_nfts(get_custom_items = "cc_get_custom_items", truncate_char = 80)
+}
+\arguments{
+\item{get_custom_items}{TODO}
+
+\item{truncate_char}{TODO}
 }
 \description{
 Description

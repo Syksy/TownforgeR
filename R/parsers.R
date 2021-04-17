@@ -137,7 +137,7 @@ tf_parse_nfts <- function(
 	nfts <- do.call("rbind", 
 		lapply(
 			TownforgeR::tf_rpc_curl(method=get_custom_items)$result$items, 
-			FUN=function(z) { unlist(z)[c("id","name","creator","amount","creation_height","name","pdesc","hash","ipfs_multihash")] }
+			FUN=function(z) { unlist(z)[c("id","name","creator","amount","creation_height","name","pdesc","gold","hash","ipfs_multihash","is_group")] }
 		)
 	)
 	nfts <- as.data.frame(
@@ -156,7 +156,8 @@ tf_parse_nfts <- function(
 #'
 #' Description
 #'
-#' @param
+#' @param item_hash TODO
+#' @param storage_blocks TODO
 #'
 #' @export
 tf_parse_nft_png <- function(
@@ -179,8 +180,14 @@ tf_parse_nft_png <- function(
 
 
 #' tf_shiny_nft_png
+#'
+#' Description
+#'
+#' @param item_hash TODO
+#'
+#' @export
 tf_shiny_nft_png <- function(
-	item_hash = "QmPcSrvw8HZuWR4zYDnPTzD1DcXAw4mGxkeBdoKP6h9hQa",
+	item_hash = "",
 	# Expected block storage count to save image at TF's IPFS rather than ipfs.io; after certain time query on ipfs.io, before try TF's ipfs
 	# By default NFT data is contained for 2.5 days on TF's IPFS at the time of writing this
 	storage_blocks = 2.5*24*60 
@@ -188,3 +195,15 @@ tf_shiny_nft_png <- function(
 	paste0('<img src="https://ipfs.townforge.net/ipfs/',item_hash,'">')
 }
 
+#' tf_shiny_item_info
+#'
+#' Description
+#'
+#' @param item_hash TODO
+#'
+#' @export
+tf_shiny_item_info <- function(
+	item_hash
+){
+	
+}

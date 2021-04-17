@@ -4,7 +4,8 @@
 #' Shiny UI for browser
 #'
 #' Description
-uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("TownforgeR"))),
+uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|Â´", "", packageVersion("TownforgeR"))),
+	# Raw command panel
 	shiny::tabPanel("Raw commands",
 		shiny::sidebarLayout(
 		#textInput("method", "Selected TF RPC method name"),
@@ -32,27 +33,36 @@ uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("To
 			)
 		)
 	),
+	# Accounts panel
 	shiny::tabPanel("Accounts",
 		DT::dataTableOutput("accountsDT")
 	),
+	# Markets panel
 	shiny::tabPanel("Markets",
 		DT::dataTableOutput("marketsDT")
 	),
+	# NFTs panel
 	shiny::tabPanel("NFTs",
 		DT::dataTableOutput("nftsDT")
 	),
+	# Network panel
 	shiny::tabPanel("Network",
 		shiny::verbatimTextOutput("network")
 	),
+	# Inspect panel
 	shiny::tabPanel("Inspect",
 		shiny::tabsetPanel(type = "tabs",
 			shiny::tabPanel("NFTs",
 				shiny::sidebarLayout(
 					shiny::sidebarPanel(
-						"nft"
+						shiny::selectInput("item_inspect",
+							label = "Select item",
+							choices = c("")
+							#choices = TownforgeR:::formatNFTs()
+						)
 					),
 					shiny::mainPanel(
-						htmlOutput("inspect")
+						shiny::htmlOutput("inspect_item")
 					)
 				)
 			),
@@ -66,7 +76,12 @@ uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("To
 #' Shiny server side
 #'
 #' Description
-serverTF <- function(input, output){
+serverTF <- function(input, output, session){
+	# Need to load select options on the run
+	updateSelectInput(session, "item_inspect",
+		choices = TownforgeR:::formatNFTs()
+	)
+
 	output$pars <- shiny::renderUI({
 		if(input$command %in% c("cc_get_account")){
 			shiny::textInput("id", "id", value = 0)
@@ -104,9 +119,17 @@ serverTF <- function(input, output){
 	output$network <- shiny::renderPrint({ 
 		TownforgeR::tf_parse_network()
 	})
-	output$inspect <- shiny::renderText({
-		#TownforgeR::tf_shiny_nft_png()
-		tf_shiny_nft_png()
+	output$inspect_item <- shiny::renderText({
+		items <- TownforgeR::tf_parse_nfts()
+		items <- items[which(paste(items$id, ":", items$name) == input$item_inspect),]
+		ret <- ifelse(items$ipfs_multihash=="",
+			# Not an IPFS NFT, return ordinary HTML formatting
+			#input$item_inspect,
+			paste(paste(names(items), items, sep=": "), collapse="<br>"),
+			# Try render an NFT representation in addition to just item information
+			paste(paste(paste(names(items), items, sep=": "), collapse="<br>"),TownforgeR::tf_shiny_nft_png(items$ipfs_multihash), sep="<br><br>")
+		)
+		ret
 	})
 }
 
@@ -116,8 +139,8 @@ serverTF <- function(input, output){
 #'
 #' @export
 shinyTF <- function(){
-	#app <- shiny::shinyApp(ui = TownforgeR::uiTF, server = TownforgeR::serverTF)
-	app <- shiny::shinyApp(ui = uiTF, server = serverTF)
+	app <- shiny::shinyApp(ui = TownforgeR:::uiTF, server = TownforgeR:::serverTF)
+	#app <- shiny::shinyApp(ui = uiTF, server = serverTF)
 	shiny::runApp(app)
 }
 
