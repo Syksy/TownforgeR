@@ -1,6 +1,6 @@
 Package: TownforgeR
 Title: R-package for handling Townforge related data
-Version: 0.0.8
+Version: 0.0.9
 Authors@R: person("Teemu Daniel", "Laajala", email = "teelaa@utu.fi",
 		role = c("aut", "cre"))
 Description: R-package for handling e.g. RPC interaction with the blockchain-based game Townforge, originally forked from Monero. 
