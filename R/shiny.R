@@ -135,6 +135,10 @@ uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("T
   shiny::tabPanel("Order Book",
     shiny::actionButton("depth_chart_button", "Show sandstone order depth chart"),
     shiny::plotOutput("depth_chart")
+  ),
+  shiny::tabPanel("Map",
+    shiny::actionButton("map_button", "Show map"),
+    shiny::plotOutput("map_chart")
   )
 )
 
@@ -285,6 +289,38 @@ serverTF <- function(input, output, session){
 
 	  })
 
+	})
+	
+	shiny::observeEvent(input$map_button, {
+	  
+	  output$map_chart <- shiny::renderPlot({
+	    
+	    flags.ret <- tf_rpc_curl(method = "cc_get_flags")$result$flags
+	    max.flag.id <- flags.ret[[length(flags.ret)]]$id
+	    
+	    coords.met <- matrix(NA_real_, nrow = max.flag.id, ncol = 4, dimnames = list(NULL, c("x0", "x1", "y0", "y1")) )
+	    owner <- vector(mode = "numeric", length = max.flag.id)
+	    
+	    for (i in 1:max.flag.id) {
+	      ret <- tf_rpc_curl(method = "cc_get_flag", params = list(id = i))
+	      if (any(names(ret) == "error")) { next }
+	      coords.met[i, "x0"] <- ret$result$x0
+	      coords.met[i, "x1"] <- ret$result$x1
+	      coords.met[i, "y0"] <- ret$result$y0
+	      coords.met[i, "y1"] <- ret$result$y1
+	      owner[i] <- ret$result$owner
+	    }
+	    
+	    owner <- owner[complete.cases(coords.met)]
+	    coords.met <- coords.met[complete.cases(coords.met), ]
+	    
+	    plot(0, 0, xlim = range(coords.met[, c("x0", "x1")]), 
+	      ylim = range(coords.met[, c("y0", "y1")]),
+	        main = "Flag map, by owner ID")
+	    rect(coords.met[, "x0"], coords.met[, "y0"], coords.met[, "x1"], coords.met[, "y1"], col = owner)
+	    legend("topleft", legend = unique(owner), fill = unique(owner), horiz = TRUE)
+	    
+	  })
 	})
 
 }
