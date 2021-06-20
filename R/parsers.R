@@ -108,16 +108,17 @@ tf_parse_items <- function(
 #'
 #' @export
 tf_parse_markets <- function(
-	# RPC command for extracting market orders in the tx pool
-	get_order_book = "cc_get_order_book"
+  # RPC command for extracting market orders in the tx pool
+  get_order_book = "cc_get_order_book"
 ){
-	markets <- do.call("rbind", 
-		lapply(
-			TownforgeR::tf_rpc_curl(method=get_order_book, params=list("bids"=TRUE, "offers"=TRUE))$result$offers,
-			FUN = as.data.frame
-		)
-	)
-	markets
+  markets <- TownforgeR::tf_rpc_curl(method=get_order_book, params=list("bids"=TRUE, "offers"=TRUE))$result
+  markets <- do.call("rbind", 
+    lapply(
+      unlist(markets[c("bids", "offers")], recursive = FALSE),
+      FUN = as.data.frame
+    )
+  )
+  markets
 }
 
 #' tf_parse_nfts
