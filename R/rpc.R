@@ -123,22 +123,35 @@ tf_rpc_curl <- function(
 	# - cc_get_stats(self):
 	method = "get_block_count",
 	params = list(),
+  num.as.string = FALSE,
+  nonce.as.string = FALSE,
 	# Additional parameters
 	...
 ){
-	try({RJSONIO::fromJSON(
-		RCurl::postForm(url,
-			.opts = list(
-				postfields = RJSONIO::toJSON(
-					list(
-						jsonrpc = "2.0", 
-						id = "0", 
-						method = method,
-						params = params
-					)
-				),
-				httpheader = c('Content-Type' = 'application/json', Accept = 'application/json')
-			)
-		)
-	)})
+  
+  
+  
+  rcp.ret <- 	RCurl::postForm(url,
+    .opts = list(
+      postfields = RJSONIO::toJSON(
+        list(
+          jsonrpc = "2.0", 
+          id = "0", 
+          method = method,
+          params = params
+        )
+      ),
+      httpheader = c('Content-Type' = 'application/json', Accept = 'application/json')
+    )
+  )
+  
+  if (num.as.string) {
+    rcp.ret <- gsub("(: )([-0123456789.]+)([,\n\r])", "\\1\"\\2\"\\3", rcp.ret )
+  }
+  
+  if (nonce.as.string & ! num.as.string) {
+    rcp.ret <- gsub("(\"nonce\": )([-0123456789.]+)([,\n\r])", "\\1\"\\2\"\\3", rcp.ret )
+  }
+  
+	RJSONIO::fromJSON(rcp.ret) # , simplify = FALSE
 }
