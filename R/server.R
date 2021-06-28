@@ -142,6 +142,7 @@ serverTF <- function(input, output, session){
       
       order.book <- TownforgeR::tf_parse_markets(url = url)
       order.book <- order.book[order.book$id == 1, ]
+      order.book$price <- order.book$price / 1e+06
       order.book <- order.book[order(order.book$price), ]
       bids.book <- order.book[order.book$bid, ]
       offers.book <- order.book[ ! order.book$bid, ]
@@ -149,17 +150,21 @@ serverTF <- function(input, output, session){
       bids.book.steps <- sum(bids.book$amount) - c(0, cumsum(bids.book$amount))
       
       offers.book.steps <- c(0, cumsum(offers.book$amount))
+      print(min(offers.book$price))
+      print(max(bids.book$price))
       
       plot(0, 0,  type = "n", yaxs = "i",
-        sub = paste0("Price spread: ", round(max(offers.book$price) - max(bids.book$price))),
+        sub = paste0("Price spread: ", round(min(offers.book$price) - max(bids.book$price), digits = 5)),
         xlab = "Price", ylab = "Depth",
         main = "Sandstone order book",
         xlim = range(order.book$price),
         ylim = c(0, 1.1 * max(bids.book.steps, offers.book.steps)))
       
-      plot(stepfun(bids.book$price, bids.book.steps, right = TRUE), col = "green", do.points = FALSE, add = TRUE)
+      plot(stepfun(bids.book$price, bids.book.steps, right = TRUE), col = "green", 
+        lwd = 2, do.points = FALSE, add = TRUE)
       
-      plot(stepfun(offers.book$price, offers.book.steps, right = TRUE), col = "red", do.points = FALSE,  add = TRUE)
+      plot(stepfun(offers.book$price, offers.book.steps, right = TRUE), col = "red",
+        lwd = 2, do.points = FALSE,  add = TRUE)
       
     })
     
