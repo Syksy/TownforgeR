@@ -5,11 +5,14 @@
 #'
 #' Description
 uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("TownforgeR"))),
+  theme = bslib::bs_theme(bootswatch = "minty"),
+  # For more info on themes, see https://shiny.rstudio.com/articles/themes.html 
   # Raw command panel
   shiny::tabPanel("Raw commands",
     shiny::sidebarLayout(
       #textInput("method", "Selected TF RPC method name"),
       shiny::sidebarPanel(
+        shiny::checkboxInput("dark_mode", "Dark mode"),
         shiny::selectInput("command", label="Select a TF RPC command",
           choices = c(
             "get_block_count", # Get current blockchain height

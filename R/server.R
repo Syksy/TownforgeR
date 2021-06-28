@@ -6,9 +6,17 @@
 #' Description
 serverTF <- function(input, output, session){
   
-  url <- getShinyOption("url", url)
+  url <- shiny::getShinyOption("url", url)
   # Grabs url argument from shinyTF()
   # Thanks to https://stackoverflow.com/questions/49470474/saving-r-shiny-app-as-a-function-with-arguments-passed-to-the-shiny-app
+  
+  light <- bslib::bs_theme()
+  dark <- bslib::bs_theme(bg = "black", fg = "white", primary = "purple")
+  shiny::observe(session$setCurrentTheme(
+    if (isTRUE(input$dark_mode)) {dark} else {light}
+  ))
+  # https://rstudio.github.io/bslib/articles/bslib.html#dynamic-theming
+  
   
   # Need to load select options on the run
   shiny::updateSelectInput(session, "item_inspect",
