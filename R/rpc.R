@@ -2,7 +2,12 @@
 #'
 #' Description
 #'
+#' @param url TODO
 #' @param method One of: '
+#' @param	params TODO
+#' @param	num.as.string TODO
+#' @param	nonce.as.string TODO
+#' @param ... TODO
 #'
 #' @details A list of RPC commands compatible with Townforge (v0.27.0.7 at the time of writing this) is available via Python code in https://git.townforge.net/townforge/townforge/src/branch/cc/utils/python-rpc/framework/daemon.py
 #'

@@ -15,6 +15,7 @@
 #' @param fields_nests TODO
 #' @param collapse_fun TODO
 #' @param truncate_char TODO
+#' @param url TODO
 #' @param ... TODO
 #'
 #' @return A data.frame corresponding to queried plain and nested fields over desired ids
@@ -74,6 +75,7 @@ tf_parse_accounts <- function(
 #' Creates verbatim output string that describes Townforge network status
 #' 
 #' @param get_info TODO
+#' @param url TODO
 #'
 #' @export
 tf_parse_network <- function(
@@ -108,6 +110,7 @@ tf_parse_items <- function(
 #' Description
 #'
 #' @param get_order_book TODO
+#' @param url TODO
 #'
 #' @export
 tf_parse_markets <- function(
@@ -116,7 +119,7 @@ tf_parse_markets <- function(
   url = "http://127.0.0.1:18881/json_rpc"
 ){
   markets <- TownforgeR::tf_rpc_curl(url = url, method=get_order_book, 
-    params=list("bids"=TRUE, "offers"=TRUE), num.as.string = TRUE)$result
+    params=list("bids"=TRUE, "offers"=TRUE), nonce.as.string = TRUE)$result
   markets <- do.call("rbind", 
     lapply(
       unlist(markets[c("bids", "offers")], recursive = FALSE),
@@ -132,6 +135,7 @@ tf_parse_markets <- function(
 #'
 #' @param get_custom_items TODO
 #' @param truncate_char TODO
+#' @param url TODO
 #'
 #' @export
 tf_parse_nfts <- function(

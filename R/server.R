@@ -5,9 +5,14 @@
 #'
 #' Description
 serverTF <- function(input, output, session){
+  
+  url <- getShinyOption("url", url)
+  # Grabs url argument from shinyTF()
+  # Thanks to https://stackoverflow.com/questions/49470474/saving-r-shiny-app-as-a-function-with-arguments-passed-to-the-shiny-app
+  
   # Need to load select options on the run
-  updateSelectInput(session, "item_inspect",
-    choices = TownforgeR:::formatNFTs()
+  shiny::updateSelectInput(session, "item_inspect",
+    choices = TownforgeR:::formatNFTs(url = url)
   )
   
   output$pars <- shiny::renderUI({
@@ -23,6 +28,7 @@ serverTF <- function(input, output, session){
   })
   output$verb <- shiny::renderPrint({
     TownforgeR::tf_rpc_curl(
+      url = url,
       method = input$command,
       params = TownforgeR:::pruneList(
         list(
@@ -36,26 +42,27 @@ serverTF <- function(input, output, session){
     )
   })
   output$accountsDT <- DT::renderDataTable({
-    TownforgeR::tf_parse_accounts()
+    TownforgeR::tf_parse_accounts(url = url)
   })
   output$marketsDT <- DT::renderDataTable({
-    TownforgeR::tf_parse_markets()
+    TownforgeR::tf_parse_markets(url = url)
   })
   output$nftsDT <- DT::renderDataTable({
-    TownforgeR::tf_parse_nfts()
+    TownforgeR::tf_parse_nfts(url = url)
   })
   output$network <- shiny::renderPrint({
-    TownforgeR::tf_parse_network()
+    TownforgeR::tf_parse_network(url = url)
   })
   output$inspect_item <- shiny::renderText({
-    items <- TownforgeR::tf_parse_nfts()
+    items <- TownforgeR::tf_parse_nfts(url = url)
     items <- items[which(paste(items$id, ":", items$name) == input$item_inspect),]
     ret <- ifelse(items$ipfs_multihash=="",
       # Not an IPFS NFT, return ordinary HTML formatting
       #input$item_inspect,
       paste(paste(names(items), items, sep=": "), collapse="<br>"),
       # Try render an NFT representation in addition to just item information
-      paste(paste(paste(names(items), items, sep=": "), collapse="<br>"),TownforgeR::tf_shiny_nft_png(items$ipfs_multihash), sep="<br><br>")
+      paste(paste(paste(names(items), items, sep=": "), collapse="<br>"),
+        TownforgeR::tf_shiny_nft_png(items$ipfs_multihash), sep="<br><br>")
     )
     ret
   })
@@ -125,7 +132,7 @@ serverTF <- function(input, output, session){
     
     output$depth_chart <- shiny::renderPlot({
       
-      order.book <- TownforgeR::tf_parse_markets()
+      order.book <- TownforgeR::tf_parse_markets(url = url)
       order.book <- order.book[order.book$id == 1, ]
       order.book <- order.book[order(order.book$price), ]
       bids.book <- order.book[order.book$bid, ]
@@ -154,14 +161,14 @@ serverTF <- function(input, output, session){
     
     output$map_chart <- shiny::renderPlot({
       
-      flags.ret <- tf_rpc_curl(method = "cc_get_flags")$result$flags
+      flags.ret <- tf_rpc_curl(method = "cc_get_flags", url = url)$result$flags
       max.flag.id <- flags.ret[[length(flags.ret)]]$id
       
       coords.met <- matrix(NA_real_, nrow = max.flag.id, ncol = 4, dimnames = list(NULL, c("x0", "x1", "y0", "y1")) )
       owner <- vector(mode = "numeric", length = max.flag.id)
       
       for (i in 1:max.flag.id) {
-        ret <- tf_rpc_curl(method = "cc_get_flag", params = list(id = i))
+        ret <- tf_rpc_curl(method = "cc_get_flag", params = list(id = i), url = url)
         if (any(names(ret) == "error")) { next }
         coords.met[i, "x0"] <- ret$result$x0
         coords.met[i, "x1"] <- ret$result$x1
@@ -177,7 +184,7 @@ serverTF <- function(input, output, session){
         ylim = range(coords.met[, c("y0", "y1")]),
         main = "Flag map, by owner ID")
       rect(coords.met[, "x0"], coords.met[, "y0"], coords.met[, "x1"], coords.met[, "y1"], col = owner)
-      legend("topleft", legend = unique(owner), fill = unique(owner), horiz = TRUE)
+      legend("bottomright", legend = unique(owner), fill = unique(owner), horiz = TRUE)
       
     })
   })
