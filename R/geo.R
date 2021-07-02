@@ -53,12 +53,14 @@ tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = T
       
       Matrix::image(infl.grid.ls$infl.grid, useRaster = TRUE, 
         col.regions = hcl.colors(max.effect, palette = "Hawaii", rev = TRUE), 
-        colorkey = list(tick.number = max.effect), cuts = max.effect - 1)
+        colorkey = list(tick.number = max.effect), cuts = max.effect - 1,
+        main = "Production boost, in percent")
       # useRaster = TRUE is faster
       
     },
     need = {
-      Matrix::image(infl.grid.ls$infl.grid, useRaster = TRUE)
+      Matrix::image(infl.grid.ls$infl.grid, useRaster = TRUE,
+        main = "Area where building is able to be built")
     },
     penalty = {
       infl.grid.ls$infl.grid <- infl.grid.ls$infl.grid * (-5)
@@ -66,7 +68,8 @@ tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = T
       
       Matrix::image(infl.grid.ls$infl.grid, useRaster = TRUE, 
         col.regions = hcl.colors(max.effect, palette = "ag_GrnYl"), 
-        colorkey = list(tick.number = max.effect), cuts = max.effect - 1)
+        colorkey = list(tick.number = max.effect), cuts = max.effect - 1,
+        main = "Production penalty, in percent")
     }
     # TODO: military's complex effects not calculated yet. Maybe best to combined penalty and boost calculations
     # https://townforge.net/manual/
