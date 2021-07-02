@@ -4,7 +4,7 @@
 \alias{shinyTF}
 \title{Launch TownforgeR shiny app}
 \usage{
-shinyTF()
+shinyTF(url = "http://127.0.0.1:18881/json_rpc")
 }
 \description{
 Description

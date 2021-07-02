@@ -142,5 +142,19 @@ uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("T
   shiny::tabPanel("Map",
     shiny::actionButton("map_button", "Show map"),
     shiny::plotOutput("map_chart")
+  ),
+  shiny::tabPanel("Influence", # building.type, effect.type, cut.out.flags 
+    shiny::h5("For more info, see the Influence section of https://townforge.net/manual/"),
+    shiny::selectInput("building_type", "Building type influenced:", 
+      choices = c(EMPTY = "EMPTY", AGR = "AGR", CRAFT = "CRAFT", IND = "IND", 
+        COM = "COM", RES1 = "RES1", RES2 = "RES2", RES3 = "RES3", MIL = "MIL", 
+        CUL = "CUL", STO = "STO", SAW = "SAW", KILN = "KILN", SME = "SME", 
+        WOR = "WOR", ROAD = "ROAD", RESEARCH = "RESEARCH")),
+    shiny::selectInput("effect_type", "Effect:", 
+      choices = c(bonus = "bonus", need = "need", penalty = "penalty")),
+    shiny::selectInput("cut_out_flags", "Cut out existing flags:", 
+      choices = c(Yes = TRUE, No = FALSE)),
+    shiny::actionButton("influence_button", "Show map"),
+    shiny::plotOutput("influence_chart", height = "1000px")
   )
 )

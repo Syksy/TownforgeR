@@ -8,11 +8,23 @@ tf_rpc_curl(
   url = "http://127.0.0.1:18881/json_rpc",
   method = "get_block_count",
   params = list(),
+  num.as.string = FALSE,
+  nonce.as.string = FALSE,
   ...
 )
 }
 \arguments{
+\item{url}{TODO}
+
 \item{method}{One of: '}
+
+\item{params}{TODO}
+
+\item{num.as.string}{TODO}
+
+\item{nonce.as.string}{TODO}
+
+\item{...}{TODO}
 }
 \description{
 Description

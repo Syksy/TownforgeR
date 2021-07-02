@@ -4,10 +4,7 @@
 \alias{tf_shiny_nft_png}
 \title{tf_shiny_nft_png}
 \usage{
-tf_shiny_nft_png(
-  item_hash = "QmPcSrvw8HZuWR4zYDnPTzD1DcXAw4mGxkeBdoKP6h9hQa",
-  storage_blocks = 2.5 * 24 * 60
-)
+tf_shiny_nft_png(item_hash = "", storage_blocks = 2.5 * 24 * 60)
 }
 \arguments{
 \item{item_hash}{TODO}

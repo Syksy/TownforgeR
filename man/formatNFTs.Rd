@@ -4,7 +4,7 @@
 \alias{formatNFTs}
 \title{Format NFTs in a nice character string}
 \usage{
-formatNFTs()
+formatNFTs(url = "http://127.0.0.1:18881/json_rpc")
 }
 \description{
 Description

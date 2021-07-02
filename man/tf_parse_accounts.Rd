@@ -13,6 +13,7 @@ tf_parse_accounts(
   fields_nests = c("flags", "item_balances", "badges"),
   collapse_fun = TownforgeR:::parseNest,
   truncate_char = 40,
+  url = "http://127.0.0.1:18881/json_rpc",
   ...
 )
 }
@@ -30,6 +31,8 @@ tf_parse_accounts(
 \item{collapse_fun}{TODO}
 
 \item{truncate_char}{TODO}
+
+\item{url}{TODO}
 
 \item{...}{TODO}
 }
