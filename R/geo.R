@@ -21,22 +21,21 @@ tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = T
   
   stopifnot(effect.type %in% c("bonus", "need", "penalty"))
   
-  infl.grid <- tf_infl_grid(url = url, building.type = building.type, effect.type = effect.type)
+  infl.grid.ls <- tf_infl_grid(url = url, building.type = building.type, effect.type = effect.type)
   
-  if (length(infl.grid) == 1) {
-    plot(0, 0, type = "n", main = infl.grid$error, cex.main = 1)
+  if ( ! is.null(infl.grid.ls$error)) {
+    plot(0, 0, type = "n", main = infl.grid.ls$error, cex.main = 1)
     return(invisible())
   }
   
-  unique.effect <- unique(infl.grid@x)
+  unique.effect <- unique(infl.grid.ls$infl.grid@x)
   max.effect <- max(unique.effect)
   
-  infl.grid <- infl.grid[Matrix::rowSums(infl.grid) > 0, Matrix::colSums(infl.grid) > 0]
-  # Trim down to just where we have data to plot
+  # browser()
   
   if (cut.out.flags) {
-    cutouts.grid <- tf_flag_bounds(url, grid.dim = dim(infl.grid)) #dim(infl.grid)) c(2500, 2500)
-    infl.grid[cutouts.grid == 1] <- 0
+    cutouts.grid <- tf_flag_bounds(url, grid.dim = dim(infl.grid.ls$infl.grid), coords.origin = infl.grid.ls$coords.origin) #dim(infl.grid)) c(2500, 2500)
+    infl.grid.ls$infl.grid[cutouts.grid == 1] <- 0
     #infl.grid2 <- infl.grid2[nrow(infl.grid2):1, ]
     #infl.grid2 <- infl.grid2[, ncol(infl.grid2):1]
     #infl.grid2 <- Matrix::t(infl.grid2)
@@ -44,25 +43,28 @@ tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = T
     
   }
   
+  infl.grid.ls$infl.grid <- infl.grid.ls$infl.grid[Matrix::rowSums(infl.grid.ls$infl.grid) > 0, Matrix::colSums(infl.grid.ls$infl.grid) > 0]
+  # Trim down to just where we have data to plot
+  
   switch(effect.type,
     bonus = {
-      infl.grid <- infl.grid * 5
+      infl.grid.ls$infl.grid <- infl.grid.ls$infl.grid * 5
       # to represent 5% boost
       
-      Matrix::image(infl.grid, useRaster = TRUE, 
+      Matrix::image(infl.grid.ls$infl.grid, useRaster = TRUE, 
         col.regions = hcl.colors(max.effect, palette = "Hawaii", rev = TRUE), 
         colorkey = list(tick.number = max.effect), cuts = max.effect - 1)
       # useRaster = TRUE is faster
       
     },
     need = {
-      Matrix::image(infl.grid, useRaster = TRUE)
+      Matrix::image(infl.grid.ls$infl.grid, useRaster = TRUE)
     },
     penalty = {
-      infl.grid <- infl.grid * (-5)
+      infl.grid.ls$infl.grid <- infl.grid.ls$infl.grid * (-5)
       # to represent 5% penalty
       
-      Matrix::image(infl.grid, useRaster = TRUE, 
+      Matrix::image(infl.grid.ls$infl.grid, useRaster = TRUE, 
         col.regions = hcl.colors(max.effect, palette = "ag_GrnYl"), 
         colorkey = list(tick.number = max.effect), cuts = max.effect - 1)
     }
@@ -99,7 +101,7 @@ tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = T
 #'
 #' @export
 #' @import Matrix
-tf_flag_bounds <- function(url, grid.dim, coords.offset = 1000) {
+tf_flag_bounds <- function(url, grid.dim, coords.origin, coords.offset = 1000) {
   
   flags.ret <- TownforgeR::tf_rpc_curl(method = "cc_get_flags", url = url)$result$flags
   max.flag.id <- flags.ret[[length(flags.ret)]]$id
@@ -128,12 +130,12 @@ tf_flag_bounds <- function(url, grid.dim, coords.offset = 1000) {
     role[i] <- ret$result$role
   }
   
-  x.min.map <- min(coords.mat[, "x0"], na.rm = TRUE)
-  y.min.map <- min(coords.mat[, "y0"], na.rm = TRUE)
-  coords.mat[, "x0"] <- coords.mat[, "x0"] - x.min.map + coords.offset
-  coords.mat[, "x1"] <- coords.mat[, "x1"] - x.min.map + coords.offset
-  coords.mat[, "y0"] <- coords.mat[, "y0"] - y.min.map + coords.offset
-  coords.mat[, "y1"] <- coords.mat[, "y1"] - y.min.map + coords.offset
+  # x.min.map <- min(coords.mat[, "x0"], na.rm = TRUE)
+  # y.min.map <- min(coords.mat[, "y0"], na.rm = TRUE)
+  coords.mat[, "x0"] <- coords.mat[, "x0"] - coords.origin["x"] + coords.offset
+  coords.mat[, "x1"] <- coords.mat[, "x1"] - coords.origin["x"] + coords.offset
+  coords.mat[, "y0"] <- coords.mat[, "y0"] - coords.origin["y"] + coords.offset
+  coords.mat[, "y1"] <- coords.mat[, "y1"] - coords.origin["y"] + coords.offset
   
   coords.mat.complete <- complete.cases(coords.mat)
   
@@ -148,7 +150,8 @@ tf_flag_bounds <- function(url, grid.dim, coords.offset = 1000) {
   
   for (i in seq_len(nrow(coords.mat))) {
     bounds.grid.tmp <- expand.grid(coords.mat[i, "y0"]:coords.mat[i, "y1"], coords.mat[i, "x0"]:coords.mat[i, "x1"])
-    bounds.grid.tmp <- bounds.grid.tmp[bounds.grid.tmp[, 1] <= grid.dim[1] & bounds.grid.tmp[, 2] <= grid.dim[2],  ]
+    bounds.grid.tmp <- bounds.grid.tmp[bounds.grid.tmp[, 1] <= grid.dim[1] & bounds.grid.tmp[, 2] <= grid.dim[2] &
+        bounds.grid.tmp[, 1] > 0 & bounds.grid.tmp[, 2] > 0,  ]
     # Trim to the grid.dim
     if (nrow(bounds.grid.tmp) == 0) {next}
     bounds.grid <- bounds.grid + Matrix::sparseMatrix(bounds.grid.tmp[, 1], bounds.grid.tmp[, 2], x = 1L, 
@@ -218,7 +221,7 @@ tf_infl_grid <- function(url, building.type, effect.type) {
     infl.grid.ret@x[infl.grid.ret@x > 1 ] <- 1
   }
   
-  infl.grid.ret
+  list(infl.grid = infl.grid.ret, coords.origin = infl.grid.ls$coords.origin)
   
 }
 
@@ -304,7 +307,7 @@ tf_infl_location <- function(url, building.type = "all", coords.offset = 1000) {
   coords.mat[, "x1"] <- coords.mat[, "x1"] - x.min.map + coords.offset
   coords.mat[, "y0"] <- coords.mat[, "y0"] - y.min.map + coords.offset
   coords.mat[, "y1"] <- coords.mat[, "y1"] - y.min.map + coords.offset
-  
+  coords.origin <- c(x = x.min.map, y = y.min.map)
   
   infl.mat <- matrix(c(-1, 1), byrow = TRUE, nrow = nrow(coords.mat), ncol = 4 )
   
@@ -333,6 +336,7 @@ tf_infl_location <- function(url, building.type = "all", coords.offset = 1000) {
   
   list(characteristics = data.frame(
     owner, influence, role, role.name = names(role.names)[match(role, role.names)],  stringsAsFactors = FALSE), 
-    geo = infl.grid.ls)
+    geo = infl.grid.ls,
+    coords.origin = coords.origin)
 }
 

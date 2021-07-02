@@ -4,7 +4,7 @@
 \alias{tf_flag_bounds}
 \title{tf_flag_bounds}
 \usage{
-tf_flag_bounds(url, grid.dim, coords.offset = 1000)
+tf_flag_bounds(url, grid.dim, coords.origin, coords.offset = 1000)
 }
 \arguments{
 \item{url}{TODO}
