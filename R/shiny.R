@@ -8,6 +8,7 @@
 #' @export
 shinyTF <- function(url = "http://127.0.0.1:18881/json_rpc"){
   shiny::shinyOptions(url = url)
+  shiny::shinyOptions(usecairo = TRUE)
   # Passes url argument down to the server function
   # Thanks to https://stackoverflow.com/questions/49470474/saving-r-shiny-app-as-a-function-with-arguments-passed-to-the-shiny-app
   

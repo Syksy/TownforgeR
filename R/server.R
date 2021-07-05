@@ -104,7 +104,7 @@ serverTF <- function(input, output, session){
     
     system(system_command, wait = FALSE)
     
-    withProgress(message = "Starting townforge-wallet-rpc...", Sys.sleep(10))
+    shiny::withProgress(message = "Starting townforge-wallet-rpc...", Sys.sleep(10))
     # Wait for townforge-wallet-rpc to boot up
     
     wallet_balance <- TownforgeR::tf_rpc_curl(url = paste0("http://127.0.0.1:", sessionVars$wallet_rpc_port, "/json_rpc"),
@@ -150,8 +150,6 @@ serverTF <- function(input, output, session){
       bids.book.steps <- sum(bids.book$amount) - c(0, cumsum(bids.book$amount))
       
       offers.book.steps <- c(0, cumsum(offers.book$amount))
-      print(min(offers.book$price))
-      print(max(bids.book$price))
       
       plot(0, 0,  type = "n", yaxs = "i",
         sub = paste0("Price spread: ", round(min(offers.book$price) - max(bids.book$price), digits = 5)),
@@ -167,39 +165,51 @@ serverTF <- function(input, output, session){
         lwd = 2, do.points = FALSE,  add = TRUE)
       
     })
-    
   })
   
   shiny::observeEvent(input$map_button, {
     
     output$map_chart <- shiny::renderPlot({
       
-      flags.ret <- tf_rpc_curl(method = "cc_get_flags", url = url)$result$flags
+      flags.ret <- TownforgeR::tf_rpc_curl(method = "cc_get_flags", url = url)$result$flags
       max.flag.id <- flags.ret[[length(flags.ret)]]$id
       
-      coords.met <- matrix(NA_real_, nrow = max.flag.id, ncol = 4, dimnames = list(NULL, c("x0", "x1", "y0", "y1")) )
+      coords.mat <- matrix(NA_real_, nrow = max.flag.id, ncol = 4, dimnames = list(NULL, c("x0", "x1", "y0", "y1")) )
       owner <- vector(mode = "numeric", length = max.flag.id)
       
       for (i in 1:max.flag.id) {
-        ret <- tf_rpc_curl(method = "cc_get_flag", params = list(id = i), url = url)
+        if (i == 44 & packageVersion("TownforgeR") == "0.0.11") { next }
+        # far away flag in testnet
+        ret <- TownforgeR::tf_rpc_curl(method = "cc_get_flag", params = list(id = i), url = url)
         if (any(names(ret) == "error")) { next }
-        coords.met[i, "x0"] <- ret$result$x0
-        coords.met[i, "x1"] <- ret$result$x1
-        coords.met[i, "y0"] <- ret$result$y0
-        coords.met[i, "y1"] <- ret$result$y1
+        coords.mat[i, "x0"] <- ret$result$x0
+        coords.mat[i, "x1"] <- ret$result$x1
+        coords.mat[i, "y0"] <- ret$result$y0
+        coords.mat[i, "y1"] <- ret$result$y1
         owner[i] <- ret$result$owner
       }
       
-      owner <- owner[complete.cases(coords.met)]
-      coords.met <- coords.met[complete.cases(coords.met), ]
+      owner <- owner[complete.cases(coords.mat)]
+      coords.mat <- coords.mat[complete.cases(coords.mat), ]
       
-      plot(0, 0, xlim = range(coords.met[, c("x0", "x1")]), 
-        ylim = range(coords.met[, c("y0", "y1")]),
-        main = "Flag map, by owner ID")
-      rect(coords.met[, "x0"], coords.met[, "y0"], coords.met[, "x1"], coords.met[, "y1"], col = owner)
+      plot(0, 0, xlim = range(coords.mat[, c("x0", "x1")]), 
+        ylim = range(coords.mat[, c("y0", "y1")]),
+        main = "Flag map, by owner ID", asp = 1)
+      rect(coords.mat[, "x0"], coords.mat[, "y0"], coords.mat[, "x1"], coords.mat[, "y1"], col = owner)
       legend("bottomright", legend = unique(owner), fill = unique(owner), horiz = TRUE)
       
     })
   })
+  
+  shiny::observeEvent(input$influence_button, {
+  
+      output$influence_chart <- shiny::renderPlot({
+        shiny::withProgress(message = "Calculating influence...", {
+        isolate(TownforgeR::tf_plot_influence(url, input$building_type, input$effect_type, input$cut_out_flags) )
+      })
+    })
+  })
+  
+  
   
 }

@@ -4,12 +4,18 @@
 \alias{tf_parse_nfts}
 \title{tf_parse_nfts}
 \usage{
-tf_parse_nfts(get_custom_items = "cc_get_custom_items", truncate_char = 80)
+tf_parse_nfts(
+  get_custom_items = "cc_get_custom_items",
+  truncate_char = 80,
+  url = "http://127.0.0.1:18881/json_rpc"
+)
 }
 \arguments{
 \item{get_custom_items}{TODO}
 
 \item{truncate_char}{TODO}
+
+\item{url}{TODO}
 }
 \description{
 Description

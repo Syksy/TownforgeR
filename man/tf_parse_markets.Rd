@@ -4,10 +4,15 @@
 \alias{tf_parse_markets}
 \title{tf_parse_markets}
 \usage{
-tf_parse_markets(get_order_book = "cc_get_order_book")
+tf_parse_markets(
+  get_order_book = "cc_get_order_book",
+  url = "http://127.0.0.1:18881/json_rpc"
+)
 }
 \arguments{
 \item{get_order_book}{TODO}
+
+\item{url}{TODO}
 }
 \description{
 Description
