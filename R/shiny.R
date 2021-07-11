@@ -13,6 +13,7 @@ shinyTF <- function(url = "http://127.0.0.1:18881/json_rpc"){
   # Thanks to https://stackoverflow.com/questions/49470474/saving-r-shiny-app-as-a-function-with-arguments-passed-to-the-shiny-app
   
   thematic::thematic_shiny(font = "auto")
+  # ^ This is crucial to make the dark mode work for the plots
   
 	app <- shiny::shinyApp(ui = TownforgeR:::uiTF, server = TownforgeR:::serverTF)
 	#app <- shiny::shinyApp(ui = uiTF, server = serverTF)

@@ -141,7 +141,7 @@ uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("T
   ),
   shiny::tabPanel("Map",
     shiny::actionButton("map_button", "Show map"),
-    shiny::plotOutput("map_chart")
+    shiny::plotOutput("map_chart", height = "1000px")
   ),
   shiny::tabPanel("Influence", # building.type, effect.type, cut.out.flags 
     shiny::h5("For more info, see the Influence section of https://townforge.net/manual/"),

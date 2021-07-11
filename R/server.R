@@ -10,7 +10,7 @@ serverTF <- function(input, output, session){
   # Grabs url argument from shinyTF()
   # Thanks to https://stackoverflow.com/questions/49470474/saving-r-shiny-app-as-a-function-with-arguments-passed-to-the-shiny-app
   
-  light <- bslib::bs_theme()
+  light <- bslib::bs_theme(bootswatch = "minty")
   dark <- bslib::bs_theme(bg = "black", fg = "white", primary = "purple")
   shiny::observe(session$setCurrentTheme(
     if (isTRUE(input$dark_mode)) {dark} else {light}
@@ -75,13 +75,13 @@ serverTF <- function(input, output, session){
     ret
   })
   
-  sessionVars <- shiny::reactiveValues(wallet_rpc_port = "")
+  session.vars <- shiny::reactiveValues(wallet_rpc_port = "")
   
   shiny::observeEvent(input$port_submit_button, {
     
-    sessionVars$wallet_rpc_port <- input$port_wallet_rpc
+    session.vars$wallet_rpc_port <- input$port_wallet_rpc
     
-    wallet_balance <- TownforgeR::tf_rpc_curl(url = paste0("http://127.0.0.1:", sessionVars$wallet_rpc_port, "/json_rpc"),
+    wallet_balance <- TownforgeR::tf_rpc_curl(url = paste0("http://127.0.0.1:", session.vars$wallet_rpc_port, "/json_rpc"),
       method ="get_balance")
     
     #print(wallet_balance)
@@ -96,7 +96,7 @@ serverTF <- function(input, output, session){
   
   shiny::observeEvent(input$wallet_pw_submit_button, {
     
-    sessionVars$wallet_rpc_port <- "63079"
+    session.vars$wallet_rpc_port <- "63079"
     
     system_command <- paste0("\"", input$wallet_rpc_path, "\" --wallet-file \"", input$wallet_path,
       "\" --testnet --rpc-bind-port 63079 --daemon-port ", input$port_townforged,
@@ -107,7 +107,7 @@ serverTF <- function(input, output, session){
     shiny::withProgress(message = "Starting townforge-wallet-rpc...", Sys.sleep(10))
     # Wait for townforge-wallet-rpc to boot up
     
-    wallet_balance <- TownforgeR::tf_rpc_curl(url = paste0("http://127.0.0.1:", sessionVars$wallet_rpc_port, "/json_rpc"),
+    wallet_balance <- TownforgeR::tf_rpc_curl(url = paste0("http://127.0.0.1:", session.vars$wallet_rpc_port, "/json_rpc"),
       method ="get_balance")
     
     output$wallet_balance_text <-
@@ -127,7 +127,7 @@ serverTF <- function(input, output, session){
   
   shiny::observeEvent(input$deposit_submit_button, {
     
-    deposit_result <- TownforgeR::tf_rpc_curl(url = paste0("http://127.0.0.1:", sessionVars$wallet_rpc_port, "/json_rpc"),
+    deposit_result <- TownforgeR::tf_rpc_curl(url = paste0("http://127.0.0.1:", session.vars$wallet_rpc_port, "/json_rpc"),
       method = "cc_deposit", params = list(amount = formatC(input$deposit_amount * 1e+06, format = "fg")))
     # TODO: cc_deposit won't accept scientific notation, it seems, so "large" deposit amounts fail if not
     # formatted with formatC(). Need a general fix to this. maybe in tf_rpc_curl()
@@ -175,10 +175,10 @@ serverTF <- function(input, output, session){
       max.flag.id <- flags.ret[[length(flags.ret)]]$id
       
       coords.mat <- matrix(NA_real_, nrow = max.flag.id, ncol = 4, dimnames = list(NULL, c("x0", "x1", "y0", "y1")) )
-      owner <- vector(mode = "numeric", length = max.flag.id)
+      owner.id <- vector(mode = "numeric", length = max.flag.id)
       
       for (i in 1:max.flag.id) {
-        if (i == 44 & packageVersion("TownforgeR") == "0.0.11") { next }
+        if (i == 44 & packageVersion("TownforgeR") == "0.0.12") { next }
         # far away flag in testnet
         ret <- TownforgeR::tf_rpc_curl(method = "cc_get_flag", params = list(id = i), url = url)
         if (any(names(ret) == "error")) { next }
@@ -186,17 +186,26 @@ serverTF <- function(input, output, session){
         coords.mat[i, "x1"] <- ret$result$x1
         coords.mat[i, "y0"] <- ret$result$y0
         coords.mat[i, "y1"] <- ret$result$y1
-        owner[i] <- ret$result$owner
+        owner.id[i] <- ret$result$owner
       }
       
-      owner <- owner[complete.cases(coords.mat)]
+      owner.id <- owner.id[complete.cases(coords.mat)]
       coords.mat <- coords.mat[complete.cases(coords.mat), ]
+      
+      owner.df <- data.frame(owner.id = owner.id, owner.name = NA, stringsAsFactors = FALSE)
+      owner.df <- unique(owner.df)
+      
+      for (i in unique(owner.id)) {
+        ret <- TownforgeR::tf_rpc_curl(method = "cc_get_account", params = list(id = i), url = url)
+        if (any(names(ret) == "error")) { next }
+        owner.df$owner.name[owner.df$owner.id == i] <- ret$result$name
+      }
       
       plot(0, 0, xlim = range(coords.mat[, c("x0", "x1")]), 
         ylim = range(coords.mat[, c("y0", "y1")]),
-        main = "Flag map, by owner ID", asp = 1)
-      rect(coords.mat[, "x0"], coords.mat[, "y0"], coords.mat[, "x1"], coords.mat[, "y1"], col = owner)
-      legend("bottomright", legend = unique(owner), fill = unique(owner), horiz = TRUE)
+        main = "Flag map, by owner", asp = 1)
+      rect(coords.mat[, "x0"], coords.mat[, "y0"], coords.mat[, "x1"], coords.mat[, "y1"], col = owner.id)
+      legend("topright", legend = owner.df$owner.name, fill = owner.df$owner.id) #, horiz = TRUE)
       
     })
   })

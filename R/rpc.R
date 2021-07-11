@@ -7,6 +7,7 @@
 #' @param	params TODO
 #' @param	num.as.string TODO
 #' @param	nonce.as.string TODO
+#' @param	verbatim.replace TODO
 #' @param ... TODO
 #'
 #' @details A list of RPC commands compatible with Townforge (v0.27.0.7 at the time of writing this) is available via Python code in https://git.townforge.net/townforge/townforge/src/branch/cc/utils/python-rpc/framework/daemon.py
@@ -130,22 +131,42 @@ tf_rpc_curl <- function(
 	params = list(),
   num.as.string = FALSE,
   nonce.as.string = FALSE,
+  verbatim.replace = NULL,
 	# Additional parameters
 	...
 ){
   
+  if (length(verbatim.replace) > 0 ) {
+    
+    json.ret <- RJSONIO::toJSON(
+      list(
+        jsonrpc = "2.0", 
+        id = "0", 
+        method = method,
+        params = params
+      )
+    )
+    
+    for ( i in seq_along(verbatim.replace)) {
+      json.ret <- sub(paste0("\"<VERBATIMREPLACE", i, ">\""), verbatim.replace[i],  json.ret, fixed = TRUE)
+    }
+    
+  } else {
+    
+    json.ret <- RJSONIO::toJSON(
+      list(
+        jsonrpc = "2.0", 
+        id = "0", 
+        method = method,
+        params = params
+      )
+    )
+  }
   
   
   rcp.ret <- 	RCurl::postForm(url,
     .opts = list(
-      postfields = RJSONIO::toJSON(
-        list(
-          jsonrpc = "2.0", 
-          id = "0", 
-          method = method,
-          params = params
-        )
-      ),
+      postfields = json.ret,
       httpheader = c('Content-Type' = 'application/json', Accept = 'application/json')
     )
   )

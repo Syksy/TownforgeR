@@ -4,7 +4,7 @@
 \alias{tf_infl_grid}
 \title{tf_infl_grid}
 \usage{
-tf_infl_grid(url, building.type, effect.type)
+tf_infl_grid(url, building.type, effect.type, disaggregated = FALSE)
 }
 \arguments{
 \item{url}{TODO}
@@ -12,6 +12,8 @@ tf_infl_grid(url, building.type, effect.type)
 \item{building.type}{TODO}
 
 \item{effect.type}{TODO}
+
+\item{disaggregated}{return object disaggregates matrix by building type}
 }
 \value{
 TODO
