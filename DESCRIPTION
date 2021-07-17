@@ -1,6 +1,6 @@
 Package: TownforgeR
 Title: R-package for handling Townforge related data
-Version: 0.0.12
+Version: 0.0.13
 Authors@R: c(person("Teemu Daniel", "Laajala", email = "teelaa@utu.fi",
 		role = c("aut", "cre")),
 		person(given = "Rucknium", email = "Rucknium@protonmail.com",

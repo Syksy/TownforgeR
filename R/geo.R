@@ -121,7 +121,7 @@ tf_flag_bounds <- function(url, grid.dim, coords.origin, coords.offset = 1000) {
   role <- vector(mode = "numeric", length = max.flag.id)
   
   for (i in 1:max.flag.id) {
-    if (i == 44 & packageVersion("TownforgeR") == "0.0.12") { next }
+    if (i == 21 & packageVersion("TownforgeR") == "0.0.13") { next }
     # far away flag in testnet
     ret <- TownforgeR::tf_rpc_curl(method = "cc_get_flag", params = list(id = i), url = url)
     if (any(names(ret) == "error")) { next }
@@ -301,7 +301,7 @@ tf_infl_location <- function(url, building.type = "all", coords.offset = 1000) {
   role <- vector(mode = "numeric", length = max.flag.id)
   
   for (i in 1:max.flag.id) {
-    if (i == 44 & packageVersion("TownforgeR") == "0.0.12") { next }
+    if (i == 21 & packageVersion("TownforgeR") == "0.0.13") { next }
     ret <- TownforgeR::tf_rpc_curl(method = "cc_get_flag", params = list(id = i), url = url)
     if (any(names(ret) == "error")) { next }
     if ( ! ret$result$role %in% building.type) { next }

@@ -144,7 +144,7 @@ tf_rpc_curl <- function(
         id = "0", 
         method = method,
         params = params
-      )
+      ), digits = 50 # fixed: https://stackoverflow.com/questions/10820638/disable-scientific-notation-when-converting-to-json
     )
     
     for ( i in seq_along(verbatim.replace)) {
@@ -159,7 +159,7 @@ tf_rpc_curl <- function(
         id = "0", 
         method = method,
         params = params
-      )
+      ), digits = 50
     )
   }
   
@@ -167,7 +167,9 @@ tf_rpc_curl <- function(
   rcp.ret <- 	RCurl::postForm(url,
     .opts = list(
       postfields = json.ret,
-      httpheader = c('Content-Type' = 'application/json', Accept = 'application/json')
+      httpheader = c('Content-Type' = 'application/json', Accept = 'application/json'),
+      timeout = 60
+      # https://stackoverflow.com/questions/19267261/timeout-while-reading-csv-file-from-url-in-r
     )
   )
   

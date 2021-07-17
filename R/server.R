@@ -128,9 +128,10 @@ serverTF <- function(input, output, session){
   shiny::observeEvent(input$deposit_submit_button, {
     
     deposit_result <- TownforgeR::tf_rpc_curl(url = paste0("http://127.0.0.1:", session.vars$wallet_rpc_port, "/json_rpc"),
-      method = "cc_deposit", params = list(amount = formatC(input$deposit_amount * 1e+06, format = "fg")))
-    # TODO: cc_deposit won't accept scientific notation, it seems, so "large" deposit amounts fail if not
+      method = "cc_deposit", params = list(amount = input$deposit_amount * 1e+06))
+    # FIXED: TODO: cc_deposit won't accept scientific notation, it seems, so "large" deposit amounts fail if not
     # formatted with formatC(). Need a general fix to this. maybe in tf_rpc_curl()
+    
     
     output$deposit_tx_hash <- shiny::renderText(paste0("Transaction hash: ", deposit_result$result$tx_hash_list) )
     
@@ -178,7 +179,7 @@ serverTF <- function(input, output, session){
       owner.id <- vector(mode = "numeric", length = max.flag.id)
       
       for (i in 1:max.flag.id) {
-        if (i == 44 & packageVersion("TownforgeR") == "0.0.12") { next }
+        if (i == 21 & packageVersion("TownforgeR") == "0.0.13") { next }
         # far away flag in testnet
         ret <- TownforgeR::tf_rpc_curl(method = "cc_get_flag", params = list(id = i), url = url)
         if (any(names(ret) == "error")) { next }
