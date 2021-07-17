@@ -358,3 +358,32 @@ tf_infl_location <- function(url, building.type = "all", coords.offset = 1000) {
 
 
 
+#' tf_min_flag_size
+#'
+#' Get boundaries of building influence
+#'
+#' @param building.role TODO
+#' @param economic.power TODO
+#' @param min.size.scale.df TODO
+#'
+#' @return TODO
+#'
+#' @examples
+#' c()
+#'
+#'
+#' @export
+#' @import Matrix
+tf_min_flag_size <- function(building.role, economic.power) {
+  stopifnot(economic.power >= 100 & economic.power <= 300)
+  if ( ! any(min.size.scale.df$building.role == building.role)) {
+    ret <- 8
+  } else {
+  ret <- with(min.size.scale.df[min.size.scale.df$building.role == building.role, , drop = FALSE], 
+    floor(lowest + (highest - lowest) * (economic.power - 100) / 200 ))
+  # From line 409 of cc.cpp
+  }
+  min(c(ret, 256))
+}
+
+

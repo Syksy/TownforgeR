@@ -21,4 +21,6 @@ Imports:
 	bslib,
 	thematic,
 	readr,
+	stringr,
+	plyr,
 	Cairo

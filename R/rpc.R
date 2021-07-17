@@ -8,6 +8,7 @@
 #' @param	num.as.string TODO
 #' @param	nonce.as.string TODO
 #' @param	verbatim.replace TODO
+#' @param keep.trying.rpc TODO
 #' @param ... TODO
 #'
 #' @details A list of RPC commands compatible with Townforge (v0.27.0.7 at the time of writing this) is available via Python code in https://git.townforge.net/townforge/townforge/src/branch/cc/utils/python-rpc/framework/daemon.py
@@ -132,6 +133,7 @@ tf_rpc_curl <- function(
   num.as.string = FALSE,
   nonce.as.string = FALSE,
   verbatim.replace = NULL,
+  keep.trying.rpc = FALSE,
 	# Additional parameters
 	...
 ){
@@ -164,14 +166,25 @@ tf_rpc_curl <- function(
   }
   
   
-  rcp.ret <- 	RCurl::postForm(url,
+  rcp.ret <- 	tryCatch(RCurl::postForm(url,
     .opts = list(
       postfields = json.ret,
-      httpheader = c('Content-Type' = 'application/json', Accept = 'application/json'),
-      timeout = 60
+      httpheader = c('Content-Type' = 'application/json', Accept = 'application/json')
       # https://stackoverflow.com/questions/19267261/timeout-while-reading-csv-file-from-url-in-r
     )
-  )
+  ), error = function(e) {NULL})
+  
+  if (keep.trying.rpc && length(rcp.ret) == 0) {
+    while (length(rcp.ret) == 0) {
+      rcp.ret <- 	tryCatch(RCurl::postForm(url,
+        .opts = list(
+          postfields = json.ret,
+          httpheader = c('Content-Type' = 'application/json', Accept = 'application/json')
+          # https://stackoverflow.com/questions/19267261/timeout-while-reading-csv-file-from-url-in-r
+        )
+      ), error = function(e) {NULL})
+    }
+  }
   
   if (num.as.string) {
     rcp.ret <- gsub("(: )([-0123456789.]+)([,\n\r])", "\\1\"\\2\"\\3", rcp.ret )
