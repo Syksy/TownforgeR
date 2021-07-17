@@ -4,6 +4,11 @@
 #' Shiny UI for browser
 #'
 #' Description
+#' 
+
+load("data/building_names_v.rda")
+# A little hacky, but it's the only way I can get package to build.
+
 uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("TownforgeR"))),
   theme = bslib::bs_theme(bootswatch = "minty"),
   # For more info on themes, see https://shiny.rstudio.com/articles/themes.html 
@@ -146,10 +151,7 @@ uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("T
   shiny::tabPanel("Influence", # building.type, effect.type, cut.out.flags 
     shiny::h5("For more info, see the Influence section of https://townforge.net/manual/"),
     shiny::selectInput("building_type", "Building type influenced:", 
-      choices = c(EMPTY = "EMPTY", AGR = "AGR", CRAFT = "CRAFT", IND = "IND", 
-        COM = "COM", RES1 = "RES1", RES2 = "RES2", RES3 = "RES3", MIL = "MIL", 
-        CUL = "CUL", STO = "STO", SAW = "SAW", KILN = "KILN", SME = "SME", 
-        WOR = "WOR", ROAD = "ROAD", RESEARCH = "RESEARCH")),
+      choices = building.names.v),
     shiny::selectInput("effect_type", "Effect:", 
       choices = c(bonus = "bonus", need = "need", penalty = "penalty")),
     shiny::selectInput("cut_out_flags", "Cut out existing flags:", 

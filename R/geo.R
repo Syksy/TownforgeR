@@ -17,7 +17,7 @@
 #' @import Matrix
 tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = TRUE) {
   
-  stopifnot(all(building.type %in% colnames(TownforgeR::tf_influence_effects()[[1]])))
+  stopifnot(all(building.type %in% colnames(infl.effects.ls[[1]])))
   
   stopifnot(effect.type %in% c("bonus", "need", "penalty"))
   
@@ -110,7 +110,7 @@ tf_flag_bounds <- function(url, grid.dim, coords.origin, coords.offset = 1000) {
   flags.ret <- TownforgeR::tf_rpc_curl(method = "cc_get_flags", url = url)$result$flags
   max.flag.id <- flags.ret[[length(flags.ret)]]$id
   
-  role.names.tmp <- colnames(TownforgeR::tf_influence_effects()[[1]])
+  role.names.tmp <- colnames(infl.effects.ls[[1]])
   role.names <- 0:(length(role.names.tmp) - 1)
   names(role.names) <- role.names.tmp
   
@@ -189,7 +189,7 @@ tf_flag_bounds <- function(url, grid.dim, coords.origin, coords.offset = 1000) {
 #' @import Matrix
 tf_infl_grid <- function(url, building.type, effect.type, disaggregated = FALSE) {
   # effect.type is "bonus" "need" or "penalty"
-  infl.effects.mat <- TownforgeR::tf_influence_effects()[[effect.type]]
+  infl.effects.mat <- infl.effects.ls[[effect.type]]
   #ROW is affected by COLUMN
   
   infl.effects.v <- infl.effects.mat[building.type, ]
@@ -277,7 +277,7 @@ tf_infl_location <- function(url, building.type = "all", coords.offset = 1000) {
   
   coords.offset <- as.integer(coords.offset)
   
-  role.names.tmp <- colnames(TownforgeR::tf_influence_effects()[[1]])
+  role.names.tmp <- colnames(infl.effects.ls[[1]])
   role.names <- 0:(length(role.names.tmp) - 1)
   names(role.names) <- role.names.tmp
   
