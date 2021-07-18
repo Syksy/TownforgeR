@@ -32,7 +32,8 @@ tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = T
   max.effect <- max(unique.effect)
   
   if (cut.out.flags) {
-    cutouts.grid <- tf_flag_bounds(url, grid.dim = dim(infl.grid.ls$infl.grid), coords.origin = infl.grid.ls$coords.origin) #dim(infl.grid)) c(2500, 2500)
+    cutouts.grid <- tf_flag_bounds(url, grid.dim = dim(infl.grid.ls$infl.grid), 
+      coords.origin = infl.grid.ls$coords.origin)$bounds.grid #dim(infl.grid)) c(2500, 2500)
     infl.grid.ls$infl.grid[cutouts.grid == 1] <- 0L
     #infl.grid2 <- infl.grid2[nrow(infl.grid2):1, ]
     #infl.grid2 <- infl.grid2[, ncol(infl.grid2):1]
@@ -93,6 +94,7 @@ tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = T
 #'
 #' @param url TODO
 #' @param grid.dim TODO
+#' @param coords.origin TODO
 #' @param coords.offset TODO
 #'
 #' @return TODO
@@ -103,7 +105,7 @@ tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = T
 #'
 #' @export
 #' @import Matrix
-tf_flag_bounds <- function(url, grid.dim, coords.origin, coords.offset = 1000) {
+tf_flag_bounds <- function(url, grid.dim = NULL, coords.origin = NULL, coords.offset = 1000) {
   
   coords.offset <- as.integer(coords.offset)
   
@@ -136,6 +138,11 @@ tf_flag_bounds <- function(url, grid.dim, coords.origin, coords.offset = 1000) {
   
   # x.min.map <- min(coords.mat[, "x0"], na.rm = TRUE)
   # y.min.map <- min(coords.mat[, "y0"], na.rm = TRUE)
+  
+  if (is.null(coords.origin)) {
+    coords.origin <- c(x = min(coords.mat[, "x0"], na.rm = TRUE), y = min(coords.mat[, "y0"], na.rm = TRUE) )
+  }
+  
   coords.mat[, "x0"] <- coords.mat[, "x0"] - coords.origin["x"] + coords.offset
   coords.mat[, "x1"] <- coords.mat[, "x1"] - coords.origin["x"] + coords.offset
   coords.mat[, "y0"] <- coords.mat[, "y0"] - coords.origin["y"] + coords.offset
@@ -149,6 +156,11 @@ tf_flag_bounds <- function(url, grid.dim, coords.origin, coords.offset = 1000) {
   coords.mat <- coords.mat[coords.mat.complete, ]
   
   mode(coords.mat) <- "integer"
+  
+  if (is.null(grid.dim)) {
+    grid.dim <- c(max(coords.mat[, "y1"], na.rm = TRUE), max(coords.mat[, "x1"], na.rm = TRUE) )
+    grid.dim <- grid.dim + coords.offset
+  }
   
   bounds.grid <- Matrix::sparseMatrix(NULL, NULL, dims = grid.dim)
   
@@ -166,7 +178,7 @@ tf_flag_bounds <- function(url, grid.dim, coords.origin, coords.offset = 1000) {
   #  owner, role, role.name = names(role.names)[match(role, role.names)],  stringsAsFactors = FALSE), 
   #  geo = bounds.grid)
   
-  bounds.grid
+  list(bounds.grid = bounds.grid, coords.origin = coords.origin)
   
 }
 
@@ -187,7 +199,7 @@ tf_flag_bounds <- function(url, grid.dim, coords.origin, coords.offset = 1000) {
 #'
 #' @export
 #' @import Matrix
-tf_infl_grid <- function(url, building.type, effect.type, disaggregated = FALSE) {
+tf_infl_grid <- function(url, building.type, effect.type, grid.dim, coords.origin, disaggregated = FALSE) {
   # effect.type is "bonus" "need" or "penalty"
   infl.effects.mat <- infl.effects.ls[[effect.type]]
   # infl.effects.ls comes from package's data
@@ -199,7 +211,8 @@ tf_infl_grid <- function(url, building.type, effect.type, disaggregated = FALSE)
     return(list(error = "ERROR: No influence effects for this building type"))
   }
   
-  infl.grid.ls <- tf_infl_location(url = url, building.type = names(na.omit(infl.effects.v)))
+  infl.grid.ls <- tf_infl_location(url = url, building.type = names(na.omit(infl.effects.v)), 
+    coords.origin = coords.origin, grid.dim = grid.dim)
   # TODO: more efficient for tf_infl_location to create a ngCMatrix or have dgCMatrix with 1's? how does it affect Reduce("+",) ?
   if ( length(infl.grid.ls$geo) == 0) {
     return(list(error = "ERROR: Building types that influence this building have not yet been built"))
@@ -246,6 +259,8 @@ tf_infl_grid <- function(url, building.type, effect.type, disaggregated = FALSE)
 #'
 #' @param url TODO
 #' @param building.type TODO
+#' @param coords.origin TODO
+#' @param grid.dim TODO
 #' @param coords.offset TODO
 #'
 #' @return TODO
@@ -256,7 +271,7 @@ tf_infl_grid <- function(url, building.type, effect.type, disaggregated = FALSE)
 #'
 #' @export
 #' @import Matrix
-tf_infl_location <- function(url, building.type = "all", coords.offset = 1000) {
+tf_infl_location <- function(url, building.type = "all", coords.origin = NULL, grid.dim = NULL, coords.offset = 1000) {
   # Remember coords.offset is 1000! Provides buffer so influence range doesn't go below zero
   # prevents problems with integers being too large. Avoids:
   # "NAs introduced by coercion to integer range"
@@ -319,6 +334,12 @@ tf_infl_location <- function(url, building.type = "all", coords.offset = 1000) {
   
   x.min.map <- min(coords.mat[, "x0"], na.rm = TRUE)
   y.min.map <- min(coords.mat[, "y0"], na.rm = TRUE)
+  
+  if ( ! is.null(coords.origin)) {
+    x.min.map <- coords.origin["x"]
+    y.min.map <- coords.origin["y"]
+  }
+  
   coords.mat[, "x0"] <- coords.mat[, "x0"] - x.min.map + coords.offset
   coords.mat[, "x1"] <- coords.mat[, "x1"] - x.min.map + coords.offset
   coords.mat[, "y0"] <- coords.mat[, "y0"] - y.min.map + coords.offset
@@ -341,13 +362,17 @@ tf_infl_location <- function(url, building.type = "all", coords.offset = 1000) {
   
   mode(infl.mat) <- "integer"
   
-  infl.grid.ls <- vector(mode = "list", length = nrow(infl.mat))
+  if ( is.null(grid.dim)) {
+    grid.dim <- c(max(infl.mat[, "y1"], na.rm = TRUE), max(infl.mat[, "x1"], na.rm = TRUE) )
+    grid.dim <- grid.dim + coords.offset
+  }
   
+  infl.grid.ls <- vector(mode = "list", length = nrow(infl.mat))
   
   for (i in seq_len(nrow(infl.mat))) {
     infl.grid.tmp <- expand.grid(infl.mat[i, "y0"]:infl.mat[i, "y1"], infl.mat[i, "x0"]:infl.mat[i, "x1"])
     infl.grid.ls[[i]] <- Matrix::sparseMatrix(infl.grid.tmp[, 1], infl.grid.tmp[, 2], # x = 1L, 
-      dims = c(max(infl.mat[, "y1"]), max(infl.mat[, "x1"])))
+      dims = grid.dim )
   }
   # dense array would be 5GB of data -- no-go
   

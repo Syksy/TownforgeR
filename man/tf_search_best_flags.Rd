@@ -11,7 +11,8 @@ tf_search_best_flags(
   get.flag.cost = TRUE,
   city = 0,
   grid.density.params = c(10, 10),
-  in.shiny = FALSE
+  in.shiny = FALSE,
+  waitress = NULL
 )
 }
 \arguments{
@@ -26,6 +27,10 @@ tf_search_best_flags(
 \item{city}{TODO}
 
 \item{grid.density.params}{TODO}
+
+\item{in.shiny}{TODO}
+
+\item{waitress}{TODO}
 }
 \value{
 TODO

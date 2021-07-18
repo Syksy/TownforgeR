@@ -8,6 +8,8 @@
 #' @param get.flag.cost TODO
 #' @param city TODO
 #' @param grid.density.params TODO
+#' @param in.shiny TODO
+#' @param waitress TODO
 #'
 #' @return TODO
 #'
@@ -18,7 +20,7 @@
 #' @export
 #' @import Matrix
 tf_search_best_flags <- function(url, building.type, economic.power, get.flag.cost = TRUE, 
-  city = 0, grid.density.params = c(10, 10), in.shiny = FALSE) {
+  city = 0, grid.density.params = c(10, 10), in.shiny = FALSE, waitress = NULL) {
   # density.params: first element is y (north-south) and second is x (east-west)
   # TODO: make the flag cutouts include inactive flags
   
@@ -35,17 +37,25 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
   role.id <- building.names.df$id[building.names.df$abbrev == building.type]
   role.name <- building.names.df$role.name[building.names.df$abbrev == building.type]
   
-  infl.grid.disagg  <- TownforgeR::tf_infl_grid(url, building.type, "bonus", disaggregated = TRUE)
   
-  cutouts.grid <- TownforgeR::tf_flag_bounds(url, grid.dim = dim(infl.grid.disagg$infl.grid[[1]]), 
-    coords.origin = infl.grid.disagg$coords.origin) 
+  flag.bounds.ls <- TownforgeR::tf_flag_bounds(url, grid.dim = NULL, 
+    coords.origin = NULL) 
   
-  grid.dim <- dim(infl.grid.disagg$infl.grid[[1]])
+  cutouts.grid <- flag.bounds.ls$bounds.grid
   
+  grid.dim <- dim(cutouts.grid)
+  
+  infl.grid.disagg  <- TownforgeR::tf_infl_grid(url, building.type, "bonus", 
+    grid.dim = grid.dim, coords.origin = flag.bounds.ls$coords.origin, disaggregated = TRUE)
+  
+  subject.to.influence <- ( ! "error" %in% names(infl.grid.disagg) )
+  
+  grid.density.y <- floor(seq(1, grid.dim[1], length.out = grid.density.params[1] + 1))
+  grid.density.x <- floor(seq(1, grid.dim[2], length.out = grid.density.params[2] + 1))
   
   candidates.mat <- as.matrix(expand.grid(
-    y = floor(seq(1, grid.dim[1], length.out = grid.density.params[1])), 
-    x = floor(seq(1, grid.dim[2], length.out = grid.density.params[2]))))
+    y = grid.density.y[ (-1) * length(grid.density.y)], 
+    x = grid.density.x[ (-1) * length(grid.density.x)] ) )
   
   infl.thresholds <- c(0, 1, seq(1.5, 101, 1)) 
   
@@ -54,9 +64,15 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
   
   for (i.candidate in seq_along(candidates.ls)) {
     
-    cat(i.candidate, " of ", length(candidates.ls), base::date(), "\n")
+    cat(i.candidate, " of ", length(candidates.ls), "    ", base::date(), "\n", sep = "")
     
     if (in.shiny) {
+      
+      #waitress$update(
+      #  html = paste0("Expanding flag from candidate grid point ", i.candidate, " of ", length(candidates.ls), ""))
+      
+      waitress$set(i.candidate / length(candidates.ls))
+      
       shiny::setProgress(
         value = i.candidate / length(candidates.ls),
         message = "Searching for best flag placements...",
@@ -98,10 +114,10 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
             method ="cc_get_production",
             params = list(
               city = city, 
-              x0 = infl.grid.disagg$coords.origin[["x"]] + init.east.coord,
-              y0 = infl.grid.disagg$coords.origin[["y"]] + init.south.coord,
-              x1 = infl.grid.disagg$coords.origin[["x"]] + east.coord,
-              y1 = infl.grid.disagg$coords.origin[["y"]] + south.coord,
+              x0 = flag.bounds.ls$coords.origin[["x"]] + init.east.coord,
+              y0 = flag.bounds.ls$coords.origin[["y"]] + init.south.coord,
+              x1 = flag.bounds.ls$coords.origin[["x"]] + east.coord,
+              y1 = flag.bounds.ls$coords.origin[["y"]] + south.coord,
               role = role.id,
               economic_power = economic.power
             ), keep.trying.rpc = TRUE )$result$item_production
@@ -112,11 +128,15 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
             ret
           })
           
-          infl.boost <- sapply(infl.grid.disagg$infl.grid, FUN = function(x) {
-            infl.coverage <- x[init.south.coord:south.coord, init.east.coord:east.coord]
-            (-1) + as.numeric(cut(mean(infl.coverage), breaks = infl.thresholds, right = FALSE) )
-            # NOTE: using as.numeric to coerce the factor
-          })
+          if (subject.to.influence) {
+            infl.boost <- sapply(infl.grid.disagg$infl.grid, FUN = function(x) {
+              infl.coverage <- x[init.south.coord:south.coord, init.east.coord:east.coord]
+              (-1) + as.numeric(cut(mean(infl.coverage), breaks = infl.thresholds, right = FALSE) )
+              # NOTE: using as.numeric to coerce the factor
+            })
+          } else {
+            infl.boost <- 0
+          }
           
           infl.boost <- sum(infl.boost)
           
@@ -125,10 +145,10 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
               method ="cc_get_new_flag_cost",
               params = list(
                 city = city, 
-                x0 = infl.grid.disagg$coords.origin[["x"]] + init.east.coord,
-                y0 = infl.grid.disagg$coords.origin[["y"]] + init.south.coord,
-                x1 = infl.grid.disagg$coords.origin[["x"]] + east.coord,
-                y1 = infl.grid.disagg$coords.origin[["y"]] + south.coord
+                x0 = flag.bounds.ls$coords.origin[["x"]] + init.east.coord,
+                y0 = flag.bounds.ls$coords.origin[["y"]] + init.south.coord,
+                x1 = flag.bounds.ls$coords.origin[["x"]] + east.coord,
+                y1 = flag.bounds.ls$coords.origin[["y"]] + south.coord
               ), keep.trying.rpc = TRUE )$result$cost
           } else {
             flag.cost <- NULL
@@ -155,10 +175,10 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
             method ="cc_get_production",
             params = list(
               city = city, 
-              x0 = infl.grid.disagg$coords.origin[["x"]] + init.east.coord,
-              y0 = infl.grid.disagg$coords.origin[["y"]] + init.south.coord,
-              x1 = infl.grid.disagg$coords.origin[["x"]] + east.coord,
-              y1 = infl.grid.disagg$coords.origin[["y"]] + south.coord,
+              x0 = flag.bounds.ls$coords.origin[["x"]] + init.east.coord,
+              y0 = flag.bounds.ls$coords.origin[["y"]] + init.south.coord,
+              x1 = flag.bounds.ls$coords.origin[["x"]] + east.coord,
+              y1 = flag.bounds.ls$coords.origin[["y"]] + south.coord,
               role = role.id,
               economic_power = economic.power
             ), keep.trying.rpc = TRUE )$result$item_production
@@ -169,11 +189,15 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
             ret
           })
           
-          infl.boost <- sapply(infl.grid.disagg$infl.grid, FUN = function(x) {
-            infl.coverage <- x[init.south.coord:south.coord, init.east.coord:east.coord]
-            (-1) + as.numeric(cut(mean(infl.coverage), breaks = infl.thresholds, right = FALSE) )
-            # NOTE: using as.numeric to coerce the factor
-          })
+          if (subject.to.influence) {
+            infl.boost <- sapply(infl.grid.disagg$infl.grid, FUN = function(x) {
+              infl.coverage <- x[init.south.coord:south.coord, init.east.coord:east.coord]
+              (-1) + as.numeric(cut(mean(infl.coverage), breaks = infl.thresholds, right = FALSE) )
+              # NOTE: using as.numeric to coerce the factor
+            })
+          } else {
+            infl.boost <- 0
+          }
           
           infl.boost <- sum(infl.boost)
           
@@ -182,10 +206,10 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
               method ="cc_get_new_flag_cost",
               params = list(
                 city = city, 
-                x0 = infl.grid.disagg$coords.origin[["x"]] + init.east.coord,
-                y0 = infl.grid.disagg$coords.origin[["y"]] + init.south.coord,
-                x1 = infl.grid.disagg$coords.origin[["x"]] + east.coord,
-                y1 = infl.grid.disagg$coords.origin[["y"]] + south.coord
+                x0 = flag.bounds.ls$coords.origin[["x"]] + init.east.coord,
+                y0 = flag.bounds.ls$coords.origin[["y"]] + init.south.coord,
+                x1 = flag.bounds.ls$coords.origin[["x"]] + east.coord,
+                y1 = flag.bounds.ls$coords.origin[["y"]] + south.coord
               ), keep.trying.rpc = TRUE )$result$cost
           } else {
             flag.cost <- NULL
@@ -213,8 +237,9 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
   # That should not matter for later use
   
   candidates.df$area <- with(candidates.df, (y1 - y0 + 1) * (x1 - x0 + 1))
+  candidates.df$flag.cost <- candidates.df$flag.cost / gold.unit.divisor
   
-  browser()
+  #browser()
   
   for (i in grep("base.production.item_", colnames(candidates.df))) {
     
@@ -271,11 +296,11 @@ tf_get_best_flag_map <-  function(url, candidates.df, chosen.item.id,
   }) )
   
   candidates.df <- candidates.df[order(candidates.df[, paste0("ROI.item_", chosen.item.id)], decreasing = TRUE), ]
-  candidates.df <- candidates.df[seq_len(number.of.top.candidates), ]
+  candidates.df <- candidates.df[seq_len(min(c(number.of.top.candidates, nrow(candidates.df)))), ]
   
-  infl.grid.disagg  <- TownforgeR::tf_infl_grid(url, building.type, "bonus", disaggregated = TRUE)
-  cutouts.grid <- tf_flag_bounds(url, grid.dim = dim(infl.grid.disagg$infl.grid[[1]]), 
-    coords.origin = infl.grid.disagg$coords.origin) 
+  flag.bounds.ls <- tf_flag_bounds(url, grid.dim = NULL, coords.origin = NULL)
+  
+  cutouts.grid <- flag.bounds.ls$bounds.grid
   
   for (i in seq_len(nrow(candidates.df))) {
     bounds.grid.tmp <- expand.grid(candidates.df[i, "y0"]:candidates.df[i, "y1"], candidates.df[i, "x0"]:candidates.df[i, "x1"])

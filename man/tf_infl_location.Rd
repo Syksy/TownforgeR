@@ -4,12 +4,22 @@
 \alias{tf_infl_location}
 \title{tf_infl_location}
 \usage{
-tf_infl_location(url, building.type = "all", coords.offset = 1000)
+tf_infl_location(
+  url,
+  building.type = "all",
+  coords.origin = NULL,
+  grid.dim = NULL,
+  coords.offset = 1000
+)
 }
 \arguments{
 \item{url}{TODO}
 
 \item{building.type}{TODO}
+
+\item{coords.origin}{TODO}
+
+\item{grid.dim}{TODO}
 
 \item{coords.offset}{TODO}
 }

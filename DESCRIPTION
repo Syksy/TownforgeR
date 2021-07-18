@@ -26,4 +26,5 @@ Imports:
 	Matrix,
 	lattice,
 	DT,
+	waiter,
 	Cairo

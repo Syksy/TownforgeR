@@ -6,6 +6,8 @@
 #' Description
 serverTF <- function(input, output, session){
   
+  waitress <- waiter::Waitress$new(theme = "overlay-percent", min = 0, max = 1)
+  
   url <- shiny::getShinyOption("url", url)
   # Grabs url argument from shinyTF()
   # Thanks to https://stackoverflow.com/questions/49470474/saving-r-shiny-app-as-a-function-with-arguments-passed-to-the-shiny-app
@@ -222,6 +224,8 @@ serverTF <- function(input, output, session){
   
   shiny::observeEvent(input$optimize_flag_button, {
     
+    waitress$start(h3("Calculating flag production..."))
+    
     # url <- "http://127.0.0.1:28881/json_rpc"
     chosen.item.id <- as.numeric(input$optimize_flag_chosen_item_id)
     number.of.top.candidates <- input$optimize_flag_number_of_top_candidates
@@ -237,7 +241,8 @@ serverTF <- function(input, output, session){
     candidates.df <-  shiny::withProgress(message = "Searching for best flag placements...", {
       TownforgeR::tf_search_best_flags(url, 
         building.type = building.type, economic.power = economic.power, 
-        get.flag.cost = TRUE, city = city, grid.density.params = c(4, 4), in.shiny = TRUE)
+        get.flag.cost = TRUE, city = city, grid.density.params = c(3, 3), in.shiny = TRUE,
+        waitress = waitress)
     })
     
     #print(str(candidates.df))
@@ -253,6 +258,12 @@ serverTF <- function(input, output, session){
       best.flag.map.mat <- as.matrix(Matrix::t(best.flag.map.ls$map.mat))
       best.flag.map.mat[best.flag.map.mat == 0] <- NA
       best.flag.map.mat.dim <- dim(best.flag.map.mat)
+      # See for why must transpose:
+      # https://stackoverflow.com/a/66453734
+      
+      par(mar = c(1, 1, 1, 1) + 0.1)
+      # c(bottom, left, top, right)
+      
       image(best.flag.map.mat, 
         col = c(1, 2, 3),
         xlim = c(0, max(best.flag.map.mat.dim)/best.flag.map.mat.dim[1]),
@@ -264,13 +275,21 @@ serverTF <- function(input, output, session){
         best.flag.map.ls$candidates.df$x0/best.flag.map.mat.dim[1], 
         best.flag.map.ls$candidates.df$y0/best.flag.map.mat.dim[2], 
         labels = LETTERS[seq_len(nrow(best.flag.map.ls$candidates.df))],
-        cex = 4, font = 2, xpd = NA)
+        cex = 2, xpd = NA) # font = 2 is bold font
+      
+      par(mar = c(5, 4, 4, 2) + 0.1)
+      # Back to default, just in case
       
     })
     
     output$optimize_flag_table <- DT::renderDataTable({
       best.flag.map.ls$candidates.df},
-      rownames = FALSE)
+      rownames = FALSE,
+      extensions = c("Buttons", "ColReorder"), 
+      options = list(dom = "Bfrtip", buttons = I("colvis"), colReorder = list(realtime = FALSE)) )
+    # https://rstudio.github.io/DT/extensions.html
+    
+    waitress$close() 
     
   })
   

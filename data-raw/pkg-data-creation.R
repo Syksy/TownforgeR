@@ -64,9 +64,12 @@ names(commodity.id.key.v) <- commodity.id.key$name
 
 save(commodity.id.key.v, file = "data/commodity_id_key_v.rda")
 
+gold.unit.divisor <- 10e+7
+
+save(gold.unit.divisor, file = "data/gold_unit_divisor.rda")
 
 save(infl.effects.ls, building.names.df, building.names.v, min.size.scale.df, 
-  commodity.id.key, commodity.id.key.v, file = "R/sysdata.rda")
+  commodity.id.key, commodity.id.key.v, gold.unit.divisor, file = "R/sysdata.rda")
 
 
 # 1 = ag

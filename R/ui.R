@@ -161,9 +161,10 @@ uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("T
     shiny::plotOutput("influence_chart", height = "1000px")
   ),
   shiny::tabPanel("Optimize Flag", # building.type, effect.type, cut.out.flags 
-    shiny::selectInput("optimize_flag_building_type", "Building type influenced:", 
+    waiter::use_waitress(),
+    shiny::selectInput("optimize_flag_building_type", "Building type:", 
       choices = building.names.v),
-    shiny::selectInput("optimize_flag_chosen_item_id", "Target commodity to maximize ROI:", 
+    shiny::selectInput("optimize_flag_chosen_item_id", "Target commodity to maximize return on investment (ROI):", 
       choices = commodity.id.key.v),
     
     shiny::sliderInput("optimize_flag_economic_power", "Intended economic power of building:",
@@ -173,8 +174,9 @@ uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("T
     #  choices = seq(100, 300, by = 10)), # TODO: Is it increments of 10 from 100 to 300?
     shiny::sliderInput("optimize_flag_number_of_top_candidates", "Number of top candidate flags to display:",
       min = 1, max = length(c(LETTERS, letters)), value = 5, step = 1),
-    
-    shiny::actionButton("optimize_flag_button", "Show map"),
+    shiny::actionButton("optimize_flag_button", "Search for best flag placements"),
+    shiny::br(),
+    shiny::br(),
     DT::dataTableOutput("optimize_flag_table"),
     shiny::plotOutput("optimize_flag_chart", height = "1000px")
   )
