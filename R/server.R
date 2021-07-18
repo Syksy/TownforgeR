@@ -181,7 +181,7 @@ serverTF <- function(input, output, session){
       owner.id <- vector(mode = "numeric", length = max.flag.id)
       
       for (i in 1:max.flag.id) {
-        if (i == 21 & packageVersion("TownforgeR") == "0.0.13") { next }
+        if (i == 21 & packageVersion("TownforgeR") == "0.0.14") { next }
         # far away flag in testnet
         ret <- TownforgeR::tf_rpc_curl(method = "cc_get_flag", params = list(id = i), url = url)
         if (any(names(ret) == "error")) { next }
