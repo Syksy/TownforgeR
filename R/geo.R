@@ -190,6 +190,7 @@ tf_flag_bounds <- function(url, grid.dim, coords.origin, coords.offset = 1000) {
 tf_infl_grid <- function(url, building.type, effect.type, disaggregated = FALSE) {
   # effect.type is "bonus" "need" or "penalty"
   infl.effects.mat <- infl.effects.ls[[effect.type]]
+  # infl.effects.ls comes from package's data
   #ROW is affected by COLUMN
   
   infl.effects.v <- infl.effects.mat[building.type, ]

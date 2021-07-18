@@ -10,11 +10,14 @@ tf_search_best_flags(
   economic.power,
   get.flag.cost = TRUE,
   city = 0,
-  grid.density.params = c(10, 10)
+  grid.density.params = c(10, 10),
+  in.shiny = FALSE
 )
 }
 \arguments{
 \item{url}{TODO}
+
+\item{building.type}{TODO}
 
 \item{economic.power}{TODO}
 

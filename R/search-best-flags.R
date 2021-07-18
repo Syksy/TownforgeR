@@ -18,7 +18,7 @@
 #' @export
 #' @import Matrix
 tf_search_best_flags <- function(url, building.type, economic.power, get.flag.cost = TRUE, 
-  city = 0, grid.density.params = c(10, 10)) {
+  city = 0, grid.density.params = c(10, 10), in.shiny = FALSE) {
   # density.params: first element is y (north-south) and second is x (east-west)
   # TODO: make the flag cutouts include inactive flags
   
@@ -55,6 +55,14 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
   for (i.candidate in seq_along(candidates.ls)) {
     
     cat(i.candidate, " of ", length(candidates.ls), base::date(), "\n")
+    
+    if (in.shiny) {
+      shiny::setProgress(
+        value = i.candidate / length(candidates.ls),
+        message = "Searching for best flag placements...",
+        detail = paste0("Expanding flag from candidate grid point ", i.candidate, " of ", length(candidates.ls), "")
+      )
+    }
     
     if (cutouts.grid[as.matrix(candidates.mat[i.candidate, , drop = FALSE]) ] != 0 ) {
       next
@@ -204,6 +212,24 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
   # NOTE: "base.production.type_" columns might not be in ascending order of item ID. 
   # That should not matter for later use
   
+  candidates.df$area <- with(candidates.df, (y1 - y0 + 1) * (x1 - x0 + 1))
+  
+  browser()
+  
+  for (i in grep("base.production.item_", colnames(candidates.df))) {
+    
+    item.num <- stringr::str_extract(colnames(candidates.df)[i], "[0-9]+")
+    
+    candidates.df[, paste0("total.production.item_", item.num)] <- 
+      candidates.df[, i] * (1 + 0.05 * candidates.df$infl.boost)
+    
+    candidates.df[, paste0("total.production.per.area.item_", item.num)] <- 
+      candidates.df[, paste0("total.production.item_", item.num)] / candidates.df$area
+    
+    candidates.df[, paste0("ROI.item_", item.num)] <- 
+      candidates.df[, paste0("total.production.item_", item.num)] / candidates.df$flag.cost
+  }
+  
   candidates.df
 }
 
@@ -211,3 +237,73 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
 
 
 
+#' tf_get_best_flag_map
+#'
+#' Calculates matrix of best flag(s) map
+#'
+#' @param url TODO
+#' @param candidates.df TODO
+#' @param chosen.item.id TODO
+#' @param number.of.top.candidates TODO
+#' @param building.type TODO
+#' @param display.perimeter TODO
+#'
+#' @return TODO
+#'
+#' @examples
+#' c()
+#'
+#'
+#' @export
+#' @import Matrix
+tf_get_best_flag_map <-  function(url, candidates.df, chosen.item.id, 
+  number.of.top.candidates, building.type, display.perimeter = TRUE) {
+  
+   #<- 256
+   #<- 3
+   #<- "WOR"
+  # "http://127.0.0.1:28881/json_rpc"
+  stopifnot(number.of.top.candidates <= length(c(LETTERS, letters)))
+  # can't have more than 2*26 = 52 top candidates since letters are used for labels
+  
+  candidates.df <- do.call(rbind, by(candidates.df, list(candidates.df$y0, candidates.df$x0), FUN = function(x) {
+    x[which.max(x[, paste0("ROI.item_", chosen.item.id)]), , drop = FALSE]
+  }) )
+  
+  candidates.df <- candidates.df[order(candidates.df[, paste0("ROI.item_", chosen.item.id)], decreasing = TRUE), ]
+  candidates.df <- candidates.df[seq_len(number.of.top.candidates), ]
+  
+  infl.grid.disagg  <- TownforgeR::tf_infl_grid(url, building.type, "bonus", disaggregated = TRUE)
+  cutouts.grid <- tf_flag_bounds(url, grid.dim = dim(infl.grid.disagg$infl.grid[[1]]), 
+    coords.origin = infl.grid.disagg$coords.origin) 
+  
+  for (i in seq_len(nrow(candidates.df))) {
+    bounds.grid.tmp <- expand.grid(candidates.df[i, "y0"]:candidates.df[i, "y1"], candidates.df[i, "x0"]:candidates.df[i, "x1"])
+    #bounds.grid.tmp <- bounds.grid.tmp[bounds.grid.tmp[, 1] <= grid.dim[1] & bounds.grid.tmp[, 2] <= grid.dim[2] &
+    #    bounds.grid.tmp[, 1] > 0L & bounds.grid.tmp[, 2] > 0L,  ]
+    # Trim to the grid.dim
+    if (nrow(bounds.grid.tmp) == 0) {next}
+    cutouts.grid <- cutouts.grid + 2 * Matrix::sparseMatrix(bounds.grid.tmp[, 1], bounds.grid.tmp[, 2], x = 1L, 
+      dims = dim(cutouts.grid))
+    
+    if (display.perimeter) {
+      perim.df <- rbind(
+        data.frame(y = candidates.df[i, "y0"],                        x = candidates.df[i, "x0"]:candidates.df[i, "x1"]),
+        data.frame(y = candidates.df[i, "y0"]:candidates.df[i, "y1"], x = candidates.df[i, "x0"]),
+        data.frame(y = candidates.df[i, "y1"],                        x = candidates.df[i, "x0"]:candidates.df[i, "x1"]),
+        data.frame(y = candidates.df[i, "y0"]:candidates.df[i, "y1"], x = candidates.df[i, "x1"]) )
+      cutouts.grid <- cutouts.grid + 3 * Matrix::sparseMatrix(perim.df[, 1], perim.df[, 2], x = 1L, 
+        dims = dim(cutouts.grid))
+    }
+    
+  }
+  
+  if (display.perimeter) {cutouts.grid@x[cutouts.grid@x > 2]  <- 3 }
+  
+  label <- c(LETTERS, letters)[seq_len(nrow(candidates.df))]
+  
+  candidates.df <- cbind(data.frame(label, stringsAsFactors = FALSE), candidates.df)
+  
+  list(map.mat = cutouts.grid, candidates.df = candidates.df)
+  
+}

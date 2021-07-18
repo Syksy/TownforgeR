@@ -23,4 +23,7 @@ Imports:
 	readr,
 	stringr,
 	plyr,
+	Matrix,
+	lattice,
+	DT,
 	Cairo

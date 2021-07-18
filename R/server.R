@@ -220,6 +220,60 @@ serverTF <- function(input, output, session){
     })
   })
   
+  shiny::observeEvent(input$optimize_flag_button, {
+    
+    # url <- "http://127.0.0.1:28881/json_rpc"
+    chosen.item.id <- as.numeric(input$optimize_flag_chosen_item_id)
+    number.of.top.candidates <- input$optimize_flag_number_of_top_candidates
+    building.type <- input$optimize_flag_building_type
+    economic.power <- as.numeric(input$optimize_flag_economic_power)
+    city <- 0
+    # "http://127.0.0.1:28881/json_rpc"
+    print(building.type)
+    print(economic.power)
+    print(number.of.top.candidates)
+    print(chosen.item.id)
+    
+    candidates.df <-  shiny::withProgress(message = "Searching for best flag placements...", {
+      TownforgeR::tf_search_best_flags(url, 
+        building.type = building.type, economic.power = economic.power, 
+        get.flag.cost = TRUE, city = city, grid.density.params = c(4, 4), in.shiny = TRUE)
+    })
+    
+    #print(str(candidates.df))
+    
+    best.flag.map.ls <- tf_get_best_flag_map(url, candidates.df, chosen.item.id, 
+      number.of.top.candidates, building.type, display.perimeter = TRUE)
+    
+    #cat("\n mmmmmmmm \n")
+    #print(str(best.flag.map.ls))
+    
+    output$optimize_flag_chart <- shiny::renderPlot({
+      
+      best.flag.map.mat <- as.matrix(Matrix::t(best.flag.map.ls$map.mat))
+      best.flag.map.mat[best.flag.map.mat == 0] <- NA
+      best.flag.map.mat.dim <- dim(best.flag.map.mat)
+      image(best.flag.map.mat, 
+        col = c(1, 2, 3),
+        xlim = c(0, max(best.flag.map.mat.dim)/best.flag.map.mat.dim[1]),
+        ylim = c(0, max(best.flag.map.mat.dim)/best.flag.map.mat.dim[2]),
+        axes = F,
+        useRaster = TRUE)
+      
+      text(
+        best.flag.map.ls$candidates.df$x0/best.flag.map.mat.dim[1], 
+        best.flag.map.ls$candidates.df$y0/best.flag.map.mat.dim[2], 
+        labels = LETTERS[seq_len(nrow(best.flag.map.ls$candidates.df))],
+        cex = 4, font = 2, xpd = NA)
+      
+    })
+    
+    output$optimize_flag_table <- DT::renderDataTable({
+      best.flag.map.ls$candidates.df},
+      rownames = FALSE)
+    
+  })
+  
   
   
 }

@@ -39,8 +39,34 @@ min.size.scale.df <- TownforgeR::tf_get_min_flag_size_data()
 
 save(min.size.scale.df, file = "data/min_size_scale_df.rda")
 
+commodity.id.key <- as.data.frame(matrix(c(
+  1, "Sandstone",
+  2, "Granite",
+  3, "Marble",
+  4, "Pine",
+  5, "Oak",
+  6, "Teak",
+  8, "Runestone",
+  256, "Labour",
+  257, "Firewood",
+  1024, "Vegetables",
+  1025, "Grain",
+  1026, "Meat",
+  1027, "Salted meat"
+), ncol = 2, byrow = TRUE))
+colnames(commodity.id.key) <- c("id", "name")
+commodity.id.key$id <- as.numeric(commodity.id.key$id)
 
-save(infl.effects.ls, building.names.df, building.names.v, min.size.scale.df, file = "R/sysdata.rda")
+save(commodity.id.key, file = "data/commodity_id_key.rda")
+
+commodity.id.key.v <- commodity.id.key$id
+names(commodity.id.key.v) <- commodity.id.key$name
+
+save(commodity.id.key.v, file = "data/commodity_id_key_v.rda")
+
+
+save(infl.effects.ls, building.names.df, building.names.v, min.size.scale.df, 
+  commodity.id.key, commodity.id.key.v, file = "R/sysdata.rda")
 
 
 # 1 = ag
