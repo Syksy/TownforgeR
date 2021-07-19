@@ -8,7 +8,7 @@
 #' @details Construct influence effects matrix
 #'
 #' @export
-tf_influence_effects <- function(source.dir = "https://git.townforge.net/townforge/townforge/raw/branch/cc", ...) {
+tf_get_influence_effects <- function(source.dir = "https://git.townforge.net/townforge/townforge/raw/branch/cc", ...) {
   
   source.dir <- gsub("/+$", "", source.dir)
   
@@ -64,3 +64,48 @@ tf_influence_effects <- function(source.dir = "https://git.townforge.net/townfor
   list(bonus = bonus.infl.mat, need = need.infl.mat, penalty = penalty.infl.mat)
   
 }
+
+
+
+
+
+
+
+
+
+#' Construct minimum flag size data from Townforge C++ file
+#'
+#' Description
+#'
+#' @param source.dir directory of Townforge source
+#' @param ... TODO
+#'
+#' @details Construct minimum flag size data
+#'
+#' @export
+#'
+tf_get_min_flag_size_data <- function(source.dir = "https://git.townforge.net/townforge/townforge/raw/branch/cc", ...) {
+  
+  source.dir <- gsub("/+$", "", source.dir)
+  
+  cc.v <- readLines(paste0(source.dir, "/src/cc/cc.cpp"))
+  
+  cc.v <- cc.v[grep("get_min_size_for_building", cc.v)[1]:length(cc.v)]
+  
+  cc.v <- cc.v[grepl("case ROLE_[A-Z0-9]+: return scale[(]", cc.v)]
+  cc.v <- cc.v[ ! grepl("ROAD", cc.v)]
+  # Remove road since it is too complicated
+  building.role <- stringr::str_extract(cc.v, "ROLE_[A-Z0-9]+")
+  
+  cc.v <- gsub("(case ROLE_[A-Z0-9]+: return scale[(])(.+)([)];)", "\\2", cc.v)
+  cc.df <- as.data.frame(apply(do.call(rbind, strsplit(cc.v, ",")), MARGIN = 2, FUN = as.numeric))
+  colnames(cc.df) <- c("lowest", "highest")
+  cc.df$building.role <- building.role
+  min.size.scale.df <- cc.df[, c("building.role", "lowest", "highest")]
+  
+  min.size.scale.df
+}
+
+  
+  
+

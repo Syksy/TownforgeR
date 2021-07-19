@@ -17,7 +17,7 @@
 #' @import Matrix
 tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = TRUE) {
   
-  stopifnot(all(building.type %in% colnames(TownforgeR::tf_influence_effects()[[1]])))
+  stopifnot(all(building.type %in% colnames(infl.effects.ls[[1]])))
   
   stopifnot(effect.type %in% c("bonus", "need", "penalty"))
   
@@ -31,11 +31,10 @@ tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = T
   unique.effect <- unique(infl.grid.ls$infl.grid@x)
   max.effect <- max(unique.effect)
   
-  # browser()
-  
   if (cut.out.flags) {
-    cutouts.grid <- tf_flag_bounds(url, grid.dim = dim(infl.grid.ls$infl.grid), coords.origin = infl.grid.ls$coords.origin) #dim(infl.grid)) c(2500, 2500)
-    infl.grid.ls$infl.grid[cutouts.grid == 1] <- 0
+    cutouts.grid <- tf_flag_bounds(url, grid.dim = dim(infl.grid.ls$infl.grid), 
+      coords.origin = infl.grid.ls$coords.origin)$bounds.grid #dim(infl.grid)) c(2500, 2500)
+    infl.grid.ls$infl.grid[cutouts.grid == 1] <- 0L
     #infl.grid2 <- infl.grid2[nrow(infl.grid2):1, ]
     #infl.grid2 <- infl.grid2[, ncol(infl.grid2):1]
     #infl.grid2 <- Matrix::t(infl.grid2)
@@ -43,7 +42,7 @@ tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = T
     
   }
   
-  infl.grid.ls$infl.grid <- infl.grid.ls$infl.grid[Matrix::rowSums(infl.grid.ls$infl.grid) > 0, Matrix::colSums(infl.grid.ls$infl.grid) > 0]
+  infl.grid.ls$infl.grid <- infl.grid.ls$infl.grid[Matrix::rowSums(infl.grid.ls$infl.grid) > 0L, Matrix::colSums(infl.grid.ls$infl.grid) > 0L]
   # Trim down to just where we have data to plot
   
   switch(effect.type,
@@ -56,6 +55,7 @@ tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = T
         colorkey = list(tick.number = max.effect), cuts = max.effect - 1,
         main = paste0("Production boost for ", building.type, ", in percent") )
       # useRaster = TRUE is faster
+      # ALSO: useRaster flips the chart vertically.
       
     },
     need = {
@@ -94,6 +94,7 @@ tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = T
 #'
 #' @param url TODO
 #' @param grid.dim TODO
+#' @param coords.origin TODO
 #' @param coords.offset TODO
 #'
 #' @return TODO
@@ -104,12 +105,14 @@ tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = T
 #'
 #' @export
 #' @import Matrix
-tf_flag_bounds <- function(url, grid.dim, coords.origin, coords.offset = 1000) {
+tf_flag_bounds <- function(url, grid.dim = NULL, coords.origin = NULL, coords.offset = 1000) {
+  
+  coords.offset <- as.integer(coords.offset)
   
   flags.ret <- TownforgeR::tf_rpc_curl(method = "cc_get_flags", url = url)$result$flags
   max.flag.id <- flags.ret[[length(flags.ret)]]$id
   
-  role.names.tmp <- colnames(TownforgeR::tf_influence_effects()[[1]])
+  role.names.tmp <- colnames(infl.effects.ls[[1]])
   role.names <- 0:(length(role.names.tmp) - 1)
   names(role.names) <- role.names.tmp
   
@@ -120,7 +123,7 @@ tf_flag_bounds <- function(url, grid.dim, coords.origin, coords.offset = 1000) {
   role <- vector(mode = "numeric", length = max.flag.id)
   
   for (i in 1:max.flag.id) {
-    if (i == 44 & packageVersion("TownforgeR") == "0.0.12") { next }
+    if (i == 21 & packageVersion("TownforgeR") == "0.0.14") { next }
     # far away flag in testnet
     ret <- TownforgeR::tf_rpc_curl(method = "cc_get_flag", params = list(id = i), url = url)
     if (any(names(ret) == "error")) { next }
@@ -135,6 +138,11 @@ tf_flag_bounds <- function(url, grid.dim, coords.origin, coords.offset = 1000) {
   
   # x.min.map <- min(coords.mat[, "x0"], na.rm = TRUE)
   # y.min.map <- min(coords.mat[, "y0"], na.rm = TRUE)
+  
+  if (is.null(coords.origin)) {
+    coords.origin <- c(x = min(coords.mat[, "x0"], na.rm = TRUE), y = min(coords.mat[, "y0"], na.rm = TRUE) )
+  }
+  
   coords.mat[, "x0"] <- coords.mat[, "x0"] - coords.origin["x"] + coords.offset
   coords.mat[, "x1"] <- coords.mat[, "x1"] - coords.origin["x"] + coords.offset
   coords.mat[, "y0"] <- coords.mat[, "y0"] - coords.origin["y"] + coords.offset
@@ -149,12 +157,17 @@ tf_flag_bounds <- function(url, grid.dim, coords.origin, coords.offset = 1000) {
   
   mode(coords.mat) <- "integer"
   
+  if (is.null(grid.dim)) {
+    grid.dim <- c(max(coords.mat[, "y1"], na.rm = TRUE), max(coords.mat[, "x1"], na.rm = TRUE) )
+    grid.dim <- grid.dim + coords.offset
+  }
+  
   bounds.grid <- Matrix::sparseMatrix(NULL, NULL, dims = grid.dim)
   
   for (i in seq_len(nrow(coords.mat))) {
     bounds.grid.tmp <- expand.grid(coords.mat[i, "y0"]:coords.mat[i, "y1"], coords.mat[i, "x0"]:coords.mat[i, "x1"])
     bounds.grid.tmp <- bounds.grid.tmp[bounds.grid.tmp[, 1] <= grid.dim[1] & bounds.grid.tmp[, 2] <= grid.dim[2] &
-        bounds.grid.tmp[, 1] > 0 & bounds.grid.tmp[, 2] > 0,  ]
+        bounds.grid.tmp[, 1] > 0L & bounds.grid.tmp[, 2] > 0L,  ]
     # Trim to the grid.dim
     if (nrow(bounds.grid.tmp) == 0) {next}
     bounds.grid <- bounds.grid + Matrix::sparseMatrix(bounds.grid.tmp[, 1], bounds.grid.tmp[, 2], x = 1L, 
@@ -165,7 +178,7 @@ tf_flag_bounds <- function(url, grid.dim, coords.origin, coords.offset = 1000) {
   #  owner, role, role.name = names(role.names)[match(role, role.names)],  stringsAsFactors = FALSE), 
   #  geo = bounds.grid)
   
-  bounds.grid
+  list(bounds.grid = bounds.grid, coords.origin = coords.origin)
   
 }
 
@@ -176,6 +189,7 @@ tf_flag_bounds <- function(url, grid.dim, coords.origin, coords.offset = 1000) {
 #' @param url TODO
 #' @param building.type TODO
 #' @param effect.type TODO
+#' @param disaggregated return object disaggregates matrix by building type
 #'
 #' @return TODO
 #'
@@ -185,9 +199,10 @@ tf_flag_bounds <- function(url, grid.dim, coords.origin, coords.offset = 1000) {
 #'
 #' @export
 #' @import Matrix
-tf_infl_grid <- function(url, building.type, effect.type) {
+tf_infl_grid <- function(url, building.type, effect.type, grid.dim, coords.origin, disaggregated = FALSE) {
   # effect.type is "bonus" "need" or "penalty"
-  infl.effects.mat <- TownforgeR::tf_influence_effects()[[effect.type]]
+  infl.effects.mat <- infl.effects.ls[[effect.type]]
+  # infl.effects.ls comes from package's data
   #ROW is affected by COLUMN
   
   infl.effects.v <- infl.effects.mat[building.type, ]
@@ -196,16 +211,21 @@ tf_infl_grid <- function(url, building.type, effect.type) {
     return(list(error = "ERROR: No influence effects for this building type"))
   }
   
-  infl.grid.ls <- tf_infl_location(url = url, building.type = names(na.omit(infl.effects.v)))
+  infl.grid.ls <- tf_infl_location(url = url, building.type = names(na.omit(infl.effects.v)), 
+    coords.origin = coords.origin, grid.dim = grid.dim)
   # TODO: more efficient for tf_infl_location to create a ngCMatrix or have dgCMatrix with 1's? how does it affect Reduce("+",) ?
   if ( length(infl.grid.ls$geo) == 0) {
     return(list(error = "ERROR: Building types that influence this building have not yet been built"))
   }
   
-  
-  infl.grid.ret <- Matrix::sparseMatrix(NULL, NULL, dims = dim(infl.grid.ls$geo[[1]]))
-  
-  for (i in unique(infl.grid.ls$characteristics$role.name)) {
+  if (disaggregated) {
+    infl.grid.ret <- vector("list", length(unique(infl.grid.ls$characteristics$role.name)))
+    names(infl.grid.ret) <- unique(infl.grid.ls$characteristics$role.name)
+  } else {
+    infl.grid.ret <- Matrix::sparseMatrix(NULL, NULL, dims = dim(infl.grid.ls$geo[[1]]))
+  }
+
+  for (i in unique(infl.grid.ls$characteristics$role.name)  ) {
     
     infl.grid.tmp <- infl.grid.ls$geo[infl.grid.ls$characteristics$role.name == i]
     
@@ -216,12 +236,16 @@ tf_infl_grid <- function(url, building.type, effect.type) {
       infl.grid.tmp@x[infl.grid.tmp@x > infl.effects.v[i] ] <- infl.effects.v[i]
       # if higher than the maximum bonus (or penalty) , then limit it
     }
-    infl.grid.ret <- infl.grid.ret + infl.grid.tmp
+    if (disaggregated) {
+      infl.grid.ret[[i]] <- infl.grid.tmp
+    } else {
+      infl.grid.ret <- infl.grid.ret + infl.grid.tmp
+    }
     
   }
   
   if (effect.type == "need") {
-    infl.grid.ret@x[infl.grid.ret@x > 1 ] <- 1
+    infl.grid.ret@x[infl.grid.ret@x > 1L ] <- 1L
   }
   
   list(infl.grid = infl.grid.ret, coords.origin = infl.grid.ls$coords.origin)
@@ -235,6 +259,8 @@ tf_infl_grid <- function(url, building.type, effect.type) {
 #'
 #' @param url TODO
 #' @param building.type TODO
+#' @param coords.origin TODO
+#' @param grid.dim TODO
 #' @param coords.offset TODO
 #'
 #' @return TODO
@@ -245,7 +271,7 @@ tf_infl_grid <- function(url, building.type, effect.type) {
 #'
 #' @export
 #' @import Matrix
-tf_infl_location <- function(url, building.type = "all", coords.offset = 1000) {
+tf_infl_location <- function(url, building.type = "all", coords.origin = NULL, grid.dim = NULL, coords.offset = 1000) {
   # Remember coords.offset is 1000! Provides buffer so influence range doesn't go below zero
   # prevents problems with integers being too large. Avoids:
   # "NAs introduced by coercion to integer range"
@@ -265,11 +291,13 @@ tf_infl_location <- function(url, building.type = "all", coords.offset = 1000) {
   # ROLE_STONECUTTER = 10
   # ROLE_WORKFORCE = 14
   
-  role.names.tmp <- colnames(TownforgeR::tf_influence_effects()[[1]])
+  coords.offset <- as.integer(coords.offset)
+  
+  role.names.tmp <- colnames(infl.effects.ls[[1]])
   role.names <- 0:(length(role.names.tmp) - 1)
   names(role.names) <- role.names.tmp
   
-  stopifnot(length(building.type) > 0 && all(building.type %in% c("all", names(role.names)) ))
+  stopifnot(length(building.type) > 0L && all(building.type %in% c("all", names(role.names)) ))
   
   if (length(building.type) == 1 && building.type == "all") {
     building.type <- role.names
@@ -283,12 +311,13 @@ tf_infl_location <- function(url, building.type = "all", coords.offset = 1000) {
   max.flag.id <- flags.ret[[length(flags.ret)]]$id
   
   coords.mat <- matrix(NA_real_, nrow = max.flag.id, ncol = 4, dimnames = list(NULL, c("x0", "x1", "y0", "y1")) )
+  # NA_real_ instead of integer since CURL us going to read the data as numeric, anyway
   owner <- vector(mode = "numeric", length = max.flag.id)
   influence <- vector(mode = "numeric", length = max.flag.id)
   role <- vector(mode = "numeric", length = max.flag.id)
   
   for (i in 1:max.flag.id) {
-    if (i == 44 & packageVersion("TownforgeR") == "0.0.12") { next }
+    if (i == 21 & packageVersion("TownforgeR") == "0.0.14") { next }
     ret <- TownforgeR::tf_rpc_curl(method = "cc_get_flag", params = list(id = i), url = url)
     if (any(names(ret) == "error")) { next }
     if ( ! ret$result$role %in% building.type) { next }
@@ -303,9 +332,14 @@ tf_infl_location <- function(url, building.type = "all", coords.offset = 1000) {
     role[i] <- ret$result$role
   }
   
-  
   x.min.map <- min(coords.mat[, "x0"], na.rm = TRUE)
   y.min.map <- min(coords.mat[, "y0"], na.rm = TRUE)
+  
+  if ( ! is.null(coords.origin)) {
+    x.min.map <- coords.origin["x"]
+    y.min.map <- coords.origin["y"]
+  }
+  
   coords.mat[, "x0"] <- coords.mat[, "x0"] - x.min.map + coords.offset
   coords.mat[, "x1"] <- coords.mat[, "x1"] - x.min.map + coords.offset
   coords.mat[, "y0"] <- coords.mat[, "y0"] - y.min.map + coords.offset
@@ -328,12 +362,17 @@ tf_infl_location <- function(url, building.type = "all", coords.offset = 1000) {
   
   mode(infl.mat) <- "integer"
   
+  if ( is.null(grid.dim)) {
+    grid.dim <- c(max(infl.mat[, "y1"], na.rm = TRUE), max(infl.mat[, "x1"], na.rm = TRUE) )
+    grid.dim <- grid.dim + coords.offset
+  }
+  
   infl.grid.ls <- vector(mode = "list", length = nrow(infl.mat))
   
   for (i in seq_len(nrow(infl.mat))) {
     infl.grid.tmp <- expand.grid(infl.mat[i, "y0"]:infl.mat[i, "y1"], infl.mat[i, "x0"]:infl.mat[i, "x1"])
     infl.grid.ls[[i]] <- Matrix::sparseMatrix(infl.grid.tmp[, 1], infl.grid.tmp[, 2], # x = 1L, 
-      dims = c(max(infl.mat[, "y1"]), max(infl.mat[, "x1"])))
+      dims = grid.dim )
   }
   # dense array would be 5GB of data -- no-go
   
@@ -342,4 +381,35 @@ tf_infl_location <- function(url, building.type = "all", coords.offset = 1000) {
     geo = infl.grid.ls,
     coords.origin = coords.origin)
 }
+
+
+
+#' tf_min_flag_size
+#'
+#' Get boundaries of building influence
+#'
+#' @param building.role TODO
+#' @param economic.power TODO
+#' @param min.size.scale.df TODO
+#'
+#' @return TODO
+#'
+#' @examples
+#' c()
+#'
+#'
+#' @export
+#' @import Matrix
+tf_min_flag_size <- function(building.role, economic.power) {
+  stopifnot(economic.power >= 100 & economic.power <= 300)
+  if ( ! any(min.size.scale.df$building.role == building.role)) {
+    ret <- 8
+  } else {
+  ret <- with(min.size.scale.df[min.size.scale.df$building.role == building.role, , drop = FALSE], 
+    floor(lowest + (highest - lowest) * (economic.power - 100) / 200 ))
+  # From line 409 of cc.cpp
+  }
+  min(c(ret, 256))
+}
+
 

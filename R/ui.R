@@ -4,6 +4,12 @@
 #' Shiny UI for browser
 #'
 #' Description
+#' 
+
+load("data/building_names_v.rda")
+load("data/commodity_id_key_v.rda")
+# A little hacky, but it's the only way I can get package to build.
+
 uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("TownforgeR"))),
   theme = bslib::bs_theme(bootswatch = "minty"),
   # For more info on themes, see https://shiny.rstudio.com/articles/themes.html 
@@ -141,20 +147,37 @@ uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("T
   ),
   shiny::tabPanel("Map",
     shiny::actionButton("map_button", "Show map"),
-    shiny::plotOutput("map_chart")
+    shiny::plotOutput("map_chart", height = "1000px")
   ),
   shiny::tabPanel("Influence", # building.type, effect.type, cut.out.flags 
     shiny::h5("For more info, see the Influence section of https://townforge.net/manual/"),
     shiny::selectInput("building_type", "Building type influenced:", 
-      choices = c(EMPTY = "EMPTY", AGR = "AGR", CRAFT = "CRAFT", IND = "IND", 
-        COM = "COM", RES1 = "RES1", RES2 = "RES2", RES3 = "RES3", MIL = "MIL", 
-        CUL = "CUL", STO = "STO", SAW = "SAW", KILN = "KILN", SME = "SME", 
-        WOR = "WOR", ROAD = "ROAD", RESEARCH = "RESEARCH")),
+      choices = building.names.v),
     shiny::selectInput("effect_type", "Effect:", 
       choices = c(bonus = "bonus", need = "need", penalty = "penalty")),
     shiny::selectInput("cut_out_flags", "Cut out existing flags:", 
       choices = c(Yes = TRUE, No = FALSE)),
     shiny::actionButton("influence_button", "Show map"),
     shiny::plotOutput("influence_chart", height = "1000px")
+  ),
+  shiny::tabPanel("Optimize Flag", # building.type, effect.type, cut.out.flags 
+    waiter::use_waitress(),
+    shiny::selectInput("optimize_flag_building_type", "Building type:", 
+      choices = building.names.v),
+    shiny::selectInput("optimize_flag_chosen_item_id", "Target commodity to maximize return on investment (ROI):", 
+      choices = commodity.id.key.v),
+    
+    shiny::sliderInput("optimize_flag_economic_power", "Intended economic power of building:",
+      min = 100, max = 300, value = 100, step = 10),
+      # TODO: Is it increments of 10 from 100 to 300?
+    #shiny::selectInput("optimize_flag_economic_power", "Intended economic power of building:", 
+    #  choices = seq(100, 300, by = 10)), # TODO: Is it increments of 10 from 100 to 300?
+    shiny::sliderInput("optimize_flag_number_of_top_candidates", "Number of top candidate flags to display:",
+      min = 1, max = length(c(LETTERS, letters)), value = 5, step = 1),
+    shiny::actionButton("optimize_flag_button", "Search for best flag placements"),
+    shiny::br(),
+    shiny::br(),
+    DT::dataTableOutput("optimize_flag_table"),
+    shiny::plotOutput("optimize_flag_chart", height = "1000px")
   )
 )

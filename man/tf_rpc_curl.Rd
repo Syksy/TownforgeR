@@ -10,6 +10,8 @@ tf_rpc_curl(
   params = list(),
   num.as.string = FALSE,
   nonce.as.string = FALSE,
+  verbatim.replace = NULL,
+  keep.trying.rpc = FALSE,
   ...
 )
 }
@@ -23,6 +25,10 @@ tf_rpc_curl(
 \item{num.as.string}{TODO}
 
 \item{nonce.as.string}{TODO}
+
+\item{verbatim.replace}{TODO}
+
+\item{keep.trying.rpc}{TODO}
 
 \item{...}{TODO}
 }
