@@ -85,39 +85,39 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
     }
     # If the initial point is within another flag, then go to the next initial starting point candidate
     
-    init.south.coord <- south.coord <- unname(candidates.mat[i.candidate, 1])
+    init.north.coord <- north.coord <- unname(candidates.mat[i.candidate, 1])
     init.east.coord  <- east.coord  <- unname(candidates.mat[i.candidate, 2])
     
     min.flag.size <- TownforgeR::tf_min_flag_size(role.name, economic.power)
-    south.coord <- south.coord + min.flag.size - 1
+    north.coord <- north.coord + min.flag.size - 1
     east.coord <- east.coord + min.flag.size - 1
     
-    expand.south <- TRUE
+    expand.north <- TRUE
     expand.east <- TRUE
     
     candidates.ls[[i.candidate]] <- vector("list", 256 * 256)
     
-    while(expand.south || expand.east) {
+    while(expand.north || expand.east) {
       
-      if (expand.south) {
-        if ( (south.coord - init.south.coord + 1) > 256 ||
-            any(dim(cutouts.grid) < c(south.coord + 1, east.coord)) ||
-            sum(cutouts.grid[init.south.coord:(south.coord + 1), init.east.coord:east.coord]) != 0 ) {
+      if (expand.north) {
+        if ( (north.coord - init.north.coord + 1) > 256 ||
+            any(dim(cutouts.grid) < c(north.coord + 1, east.coord)) ||
+            sum(cutouts.grid[init.north.coord:(north.coord + 1), init.east.coord:east.coord]) != 0 ) {
           # if the search runs grows bigger than maximum allowed size, goes into an existing flag or  
           # "goes off the map", then stop expanding in this direction
-          expand.south <- FALSE
+          expand.north <- FALSE
         } else {
           
-          south.coord <- south.coord + 1
+          north.coord <- north.coord + 1
           
           base.production.ls <- TownforgeR::tf_rpc_curl(url,
             method ="cc_get_production",
             params = list(
               city = city, 
               x0 = flag.bounds.ls$coords.origin[["x"]] + init.east.coord,
-              y0 = flag.bounds.ls$coords.origin[["y"]] + init.south.coord,
+              y0 = flag.bounds.ls$coords.origin[["y"]] + init.north.coord,
               x1 = flag.bounds.ls$coords.origin[["x"]] + east.coord,
-              y1 = flag.bounds.ls$coords.origin[["y"]] + south.coord,
+              y1 = flag.bounds.ls$coords.origin[["y"]] + north.coord,
               role = role.id,
               economic_power = economic.power
             ), keep.trying.rpc = TRUE )$result$item_production
@@ -130,7 +130,7 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
           
           if (subject.to.influence) {
             infl.boost <- sapply(infl.grid.disagg$infl.grid, FUN = function(x) {
-              infl.coverage <- x[init.south.coord:south.coord, init.east.coord:east.coord]
+              infl.coverage <- x[init.north.coord:north.coord, init.east.coord:east.coord]
               (-1) + as.numeric(cut(mean(infl.coverage), breaks = infl.thresholds, right = FALSE) )
               # NOTE: using as.numeric to coerce the factor
             })
@@ -146,15 +146,15 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
               params = list(
                 city = city, 
                 x0 = flag.bounds.ls$coords.origin[["x"]] + init.east.coord,
-                y0 = flag.bounds.ls$coords.origin[["y"]] + init.south.coord,
+                y0 = flag.bounds.ls$coords.origin[["y"]] + init.north.coord,
                 x1 = flag.bounds.ls$coords.origin[["x"]] + east.coord,
-                y1 = flag.bounds.ls$coords.origin[["y"]] + south.coord
+                y1 = flag.bounds.ls$coords.origin[["y"]] + north.coord
               ), keep.trying.rpc = TRUE )$result$cost
           } else {
             flag.cost <- NULL
           }
           
-          cand.ret <- list(y0 = init.south.coord, x0 = init.east.coord, y1 = south.coord, x1 = east.coord, 
+          cand.ret <- list(y0 = init.north.coord, x0 = init.east.coord, y1 = north.coord, x1 = east.coord, 
             infl.boost = unname(infl.boost), flag.cost = flag.cost)
           
           candidates.ls[[i.candidate]][[length(candidates.ls[[i.candidate]]) + 1]] <- 
@@ -164,8 +164,8 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
       
       if (expand.east) {
         if (  (east.coord - init.east.coord + 1) > 256 ||
-            any(dim(cutouts.grid) < c(south.coord, east.coord + 1)) ||
-            sum(cutouts.grid[init.south.coord:south.coord, init.east.coord:(east.coord + 1)]) != 0 ) {
+            any(dim(cutouts.grid) < c(north.coord, east.coord + 1)) ||
+            sum(cutouts.grid[init.north.coord:north.coord, init.east.coord:(east.coord + 1)]) != 0 ) {
           expand.east <- FALSE
         } else {
           
@@ -176,9 +176,9 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
             params = list(
               city = city, 
               x0 = flag.bounds.ls$coords.origin[["x"]] + init.east.coord,
-              y0 = flag.bounds.ls$coords.origin[["y"]] + init.south.coord,
+              y0 = flag.bounds.ls$coords.origin[["y"]] + init.north.coord,
               x1 = flag.bounds.ls$coords.origin[["x"]] + east.coord,
-              y1 = flag.bounds.ls$coords.origin[["y"]] + south.coord,
+              y1 = flag.bounds.ls$coords.origin[["y"]] + north.coord,
               role = role.id,
               economic_power = economic.power
             ), keep.trying.rpc = TRUE )$result$item_production
@@ -191,7 +191,7 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
           
           if (subject.to.influence) {
             infl.boost <- sapply(infl.grid.disagg$infl.grid, FUN = function(x) {
-              infl.coverage <- x[init.south.coord:south.coord, init.east.coord:east.coord]
+              infl.coverage <- x[init.north.coord:north.coord, init.east.coord:east.coord]
               (-1) + as.numeric(cut(mean(infl.coverage), breaks = infl.thresholds, right = FALSE) )
               # NOTE: using as.numeric to coerce the factor
             })
@@ -207,15 +207,15 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
               params = list(
                 city = city, 
                 x0 = flag.bounds.ls$coords.origin[["x"]] + init.east.coord,
-                y0 = flag.bounds.ls$coords.origin[["y"]] + init.south.coord,
+                y0 = flag.bounds.ls$coords.origin[["y"]] + init.north.coord,
                 x1 = flag.bounds.ls$coords.origin[["x"]] + east.coord,
-                y1 = flag.bounds.ls$coords.origin[["y"]] + south.coord
+                y1 = flag.bounds.ls$coords.origin[["y"]] + north.coord
               ), keep.trying.rpc = TRUE )$result$cost
           } else {
             flag.cost <- NULL
           }
           
-          cand.ret <- list(y0 = init.south.coord, x0 = init.east.coord, y1 = south.coord, x1 = east.coord, 
+          cand.ret <- list(y0 = init.north.coord, x0 = init.east.coord, y1 = north.coord, x1 = east.coord, 
             infl.boost = unname(infl.boost), flag.cost = flag.cost)
           
           candidates.ls[[i.candidate]][[length(candidates.ls[[i.candidate]]) + 1]] <- 
