@@ -2,6 +2,7 @@
 
 export(shinyTF)
 export(test.mat.image)
+export(tf_expand_search_flag)
 export(tf_flag_bounds)
 export(tf_get_best_flag_map)
 export(tf_get_influence_effects)
