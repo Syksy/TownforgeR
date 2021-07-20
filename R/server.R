@@ -22,7 +22,11 @@ serverTF <- function(input, output, session){
   
   session.vars <- shiny::reactiveValues(
     wallet_rpc_port = "",
-    best.flag.candidates.ls = NULL)
+    best.flag.candidates.ls = NULL,
+    cities = TownforgeR::tf_parse_cities(url.townforged)
+    )
+  
+  
   
   
   # Need to load select options on the run
@@ -186,7 +190,7 @@ serverTF <- function(input, output, session){
       owner.id <- vector(mode = "numeric", length = max.flag.id)
       
       for (i in 1:max.flag.id) {
-        if (i == 21 & packageVersion("TownforgeR") == "0.0.14") { next }
+        if (i == 21 & packageVersion("TownforgeR") == "0.0.15") { next }
         # far away flag in testnet
         ret <- TownforgeR::tf_rpc_curl(url.rpc = url.townforged, method = "cc_get_flag", params = list(id = i))
         if (any(names(ret) == "error")) { next }
@@ -228,6 +232,18 @@ serverTF <- function(input, output, session){
     })
   })
   
+  observe({
+    shiny::updateSelectInput(session, "optimize_flag_chosen_item_id", 
+      choices = commodity.id.key.v[commodity.id.key.v %in% 
+          commodities.buildings.produce.df$commodity.id[ 
+            commodities.buildings.produce.df$building.abbrev %in% input$optimize_flag_building_type] ])
+  })
+  
+  observe({
+    shiny::updateSelectInput(session, "optimize_flag_city", 
+      choices = session.vars$cities$cities.v)
+  })
+
   shiny::observeEvent(input$optimize_flag_button, {
     
     waitress$start(h3("Calculating flag production..."))
@@ -237,7 +253,7 @@ serverTF <- function(input, output, session){
     number.of.top.candidates <- input$optimize_flag_number_of_top_candidates
     building.type <- input$optimize_flag_building_type
     economic.power <- as.numeric(input$optimize_flag_economic_power)
-    city <- 0
+    city <- as.numeric(input$optimize_flag_city)
     # "http://127.0.0.1:28881/json_rpc"
     print(building.type)
     print(economic.power)
@@ -247,8 +263,8 @@ serverTF <- function(input, output, session){
     session.vars$best.flag.candidates.ls <- shiny::withProgress(message = "Searching for best flag placements...", {
       TownforgeR::tf_search_best_flags(url.rpc = url.townforged, 
         building.type = building.type, economic.power = economic.power, 
-        get.flag.cost = TRUE, city = city, grid.density.params = c(3, 3), in.shiny = TRUE,
-        waitress = waitress)
+        get.flag.cost = TRUE, city = city, grid.density.params = rep(input$optimize_flag_grid_density, 2), 
+        in.shiny = TRUE, waitress = waitress)
     })
     
     candidates.df <- session.vars$best.flag.candidates.ls$candidates.df

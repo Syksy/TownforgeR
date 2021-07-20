@@ -6,8 +6,7 @@
 #' Description
 #' 
 
-load("data/building_names_v.rda")
-load("data/commodity_id_key_v.rda")
+load("R/sysdata.rda")
 # A little hacky, but it's the only way I can get package to build.
 
 uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("TownforgeR"))),
@@ -163,10 +162,10 @@ uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("T
   shiny::tabPanel("Optimize Flag", # building.type, effect.type, cut.out.flags 
     waiter::use_waitress(),
     shiny::selectInput("optimize_flag_building_type", "Building type:", 
-      choices = building.names.v),
+      choices = building.names.v[building.names.v %in% 
+          commodities.buildings.produce.df$building.abbrev[! is.na(commodities.buildings.produce.df$building.abbrev)] ] ),
     shiny::selectInput("optimize_flag_chosen_item_id", "Target commodity to maximize return on investment (ROI):", 
-      choices = commodity.id.key.v),
-    
+      choices = NULL),  
     shiny::sliderInput("optimize_flag_economic_power", "Intended economic power of building:",
       min = 100, max = 300, value = 100, step = 10),
       # TODO: Is it increments of 10 from 100 to 300?
@@ -174,6 +173,9 @@ uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("T
     #  choices = seq(100, 300, by = 10)), # TODO: Is it increments of 10 from 100 to 300?
     shiny::sliderInput("optimize_flag_number_of_top_candidates", "Number of top candidate flags to display:",
       min = 1, max = length(c(LETTERS, letters)), value = 5, step = 1),
+    shiny::selectInput("optimize_flag_city", "Town:", choices = NULL),
+    shiny::sliderInput("optimize_flag_grid_density", "Density of grid search points (3 = about 5 minutes search time; 10 ≈ 30 minutes):",
+      min = 2, max = 10, value = 3, step = 1),
     shiny::actionButton("optimize_flag_button", "Search for best flag placements"),
     shiny::br(),
     shiny::br(),
