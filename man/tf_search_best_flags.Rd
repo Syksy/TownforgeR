@@ -5,7 +5,7 @@
 \title{tf_search_best_flags}
 \usage{
 tf_search_best_flags(
-  url,
+  url.rpc,
   building.type,
   economic.power,
   get.flag.cost = TRUE,
@@ -16,7 +16,7 @@ tf_search_best_flags(
 )
 }
 \arguments{
-\item{url}{TODO}
+\item{url.rpc}{TODO}
 
 \item{building.type}{TODO}
 

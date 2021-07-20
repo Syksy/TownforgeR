@@ -34,8 +34,8 @@ parseNest <- function(x){
 #' Format NFTs in a nice character string
 #'
 #' Description
-formatNFTs <- function(url = "http://127.0.0.1:18881/json_rpc")
+formatNFTs <- function(url.rpc = "http://127.0.0.1:18881/json_rpc")
 {
-	items <- TownforgeR::tf_parse_nfts(url = url)
+	items <- TownforgeR::tf_parse_nfts(url.rpc = url.rpc)
 	paste(items$id, ":", items$name)
 }

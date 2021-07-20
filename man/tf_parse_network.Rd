@@ -6,13 +6,13 @@
 \usage{
 tf_parse_network(
   get_info = "get_info",
-  url = "http://127.0.0.1:18881/json_rpc"
+  url.rpc = "http://127.0.0.1:18881/json_rpc"
 )
 }
 \arguments{
 \item{get_info}{TODO}
 
-\item{url}{TODO}
+\item{url.rpc}{TODO}
 }
 \description{
 Creates verbatim output string that describes Townforge network status

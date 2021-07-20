@@ -5,14 +5,14 @@
 \title{tf_flag_bounds}
 \usage{
 tf_flag_bounds(
-  url,
+  url.rpc,
   grid.dim = NULL,
   coords.origin = NULL,
   coords.offset = 1000
 )
 }
 \arguments{
-\item{url}{TODO}
+\item{url.rpc}{TODO}
 
 \item{grid.dim}{TODO}
 

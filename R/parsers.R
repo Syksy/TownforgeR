@@ -15,7 +15,7 @@
 #' @param fields_nests TODO
 #' @param collapse_fun TODO
 #' @param truncate_char TODO
-#' @param url TODO
+#' @param url.rpc TODO
 #' @param ... TODO
 #'
 #' @return A data.frame corresponding to queried plain and nested fields over desired ids
@@ -39,7 +39,7 @@ tf_parse_accounts <- function(
 	collapse_fun = TownforgeR:::parseNest,
 	# If collapsed_fun produces a character count above truncation limit, cut it and add '...' at the end
 	truncate_char = 40,
-  url = "http://127.0.0.1:18881/json_rpc",
+  url.rpc = "http://127.0.0.1:18881/json_rpc",
 	# Additional parameters
 	...
 ){
@@ -47,7 +47,7 @@ tf_parse_accounts <- function(
 	if(missing(ids)){
 		# First extract existing user account ids using 'cc_get_accounts'		
 		ids <- unlist(lapply(TownforgeR::tf_rpc_curl(
-		  url = url, method=get_accounts)$result$accounts, FUN=function(x) x$id))
+		  url.rpc = url.rpc, method=get_accounts)$result$accounts, FUN=function(x) x$id))
 	# Invalid class for custom ids
 	}else if(!class(ids) %in% c("character", "numeric")){
 		stop(paste("Invalid class in 'ids':", class(ids)))
@@ -59,7 +59,7 @@ tf_parse_accounts <- function(
 	do.call("rbind", 
 		# Loop over individual account ids and extract a row of data for each based on desired fields
 		lapply(ids, FUN=function(id) {
-			tmp <- TownforgeR::tf_rpc_curl(url = url, method=get_account, params=list("id"=id))$result
+			tmp <- TownforgeR::tf_rpc_curl(url.rpc = url.rpc, method=get_account, params=list("id"=id))$result
 			tmp_plain <- as.data.frame(tmp[fields_plain])
 			tmp_nests <- do.call("cbind", lapply(tmp[fields_nests], FUN=collapse_fun))
 			names(tmp_nests) <- fields_nests
@@ -75,17 +75,17 @@ tf_parse_accounts <- function(
 #' Creates verbatim output string that describes Townforge network status
 #' 
 #' @param get_info TODO
-#' @param url TODO
+#' @param url.rpc TODO
 #'
 #' @export
 tf_parse_network <- function(
 	# RPC command for getting Townforge network info
 	get_info = 'get_info',
-  url = "http://127.0.0.1:18881/json_rpc"
+  url.rpc = "http://127.0.0.1:18881/json_rpc"
 ){
 	# Line change
 	cat("\n")
-	info <- TownforgeR::tf_rpc_curl(url = url, method=get_info)$result
+	info <- TownforgeR::tf_rpc_curl(url.rpc = url.rpc, method=get_info)$result
 	# Omit id and jsonrpc
 	info <- info[-c(1:2)]
 	# Parse rest into suitable fields
@@ -110,15 +110,15 @@ tf_parse_items <- function(
 #' Description
 #'
 #' @param get_order_book TODO
-#' @param url TODO
+#' @param url.rpc TODO
 #'
 #' @export
 tf_parse_markets <- function(
   # RPC command for extracting market orders in the tx pool
   get_order_book = "cc_get_order_book",
-  url = "http://127.0.0.1:18881/json_rpc"
+  url.rpc = "http://127.0.0.1:18881/json_rpc"
 ){
-  markets <- TownforgeR::tf_rpc_curl(url = url, method=get_order_book, 
+  markets <- TownforgeR::tf_rpc_curl(url.rpc = url.rpc, method=get_order_book, 
     params=list("bids"=TRUE, "offers"=TRUE), nonce.as.string = TRUE)$result
   markets <- do.call("rbind", 
     lapply(
@@ -135,7 +135,7 @@ tf_parse_markets <- function(
 #'
 #' @param get_custom_items TODO
 #' @param truncate_char TODO
-#' @param url TODO
+#' @param url.rpc TODO
 #'
 #' @export
 tf_parse_nfts <- function(
@@ -143,11 +143,11 @@ tf_parse_nfts <- function(
 	get_custom_items = "cc_get_custom_items",
 	# Character count to truncate strings to avoid extremely lengthy columns
 	truncate_char = 80,
-  url = "http://127.0.0.1:18881/json_rpc"
+  url.rpc = "http://127.0.0.1:18881/json_rpc"
 ){
 	nfts <- do.call("rbind", 
 		lapply(
-			TownforgeR::tf_rpc_curl(url = url, method=get_custom_items)$result$items, 
+			TownforgeR::tf_rpc_curl(url.rpc = url.rpc, method=get_custom_items)$result$items, 
 			FUN=function(z) { unlist(z)[c("id","name","creator","amount","creation_height","name","pdesc","gold","hash","ipfs_multihash","is_group")] }
 		)
 	)

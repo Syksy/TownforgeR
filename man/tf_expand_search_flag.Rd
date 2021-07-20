@@ -5,7 +5,7 @@
 \title{tf_expand_search_flag}
 \usage{
 tf_expand_search_flag(
-  url,
+  url.rpc,
   flag.bounds.ls,
   infl.grid.disagg,
   west.coord,
@@ -23,7 +23,7 @@ tf_expand_search_flag(
 )
 }
 \arguments{
-\item{url}{TODO}
+\item{url.rpc}{TODO}
 }
 \value{
 TODO

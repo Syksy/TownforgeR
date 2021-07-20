@@ -5,7 +5,7 @@
 \title{TownforgeR function for curl'ing RPC calls}
 \usage{
 tf_rpc_curl(
-  url = "http://127.0.0.1:18881/json_rpc",
+  url.rpc = "http://127.0.0.1:18881/json_rpc",
   method = "get_block_count",
   params = list(),
   num.as.string = FALSE,
@@ -16,7 +16,7 @@ tf_rpc_curl(
 )
 }
 \arguments{
-\item{url}{TODO}
+\item{url.rpc}{TODO}
 
 \item{method}{One of: '}
 

@@ -2,7 +2,7 @@
 #'
 #' Brute force search for flags with best production and return on investment
 #'f
-#' @param url TODO
+#' @param url.rpc TODO
 #' @param building.type TODO
 #' @param economic.power TODO
 #' @param get.flag.cost TODO
@@ -19,7 +19,7 @@
 #'
 #' @export
 #' @import Matrix
-tf_search_best_flags <- function(url, building.type, economic.power, get.flag.cost = TRUE, 
+tf_search_best_flags <- function(url.rpc, building.type, economic.power, get.flag.cost = TRUE, 
   city = 0, grid.density.params = c(10, 10), in.shiny = FALSE, waitress = NULL) {
   # density.params: first element is y (north-south) and second is x (east-west)
   # TODO: make the flag cutouts include inactive flags
@@ -38,14 +38,14 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
   role.name <- building.names.df$role.name[building.names.df$abbrev == building.type]
   
   
-  flag.bounds.ls <- TownforgeR::tf_flag_bounds(url, grid.dim = NULL, 
+  flag.bounds.ls <- TownforgeR::tf_flag_bounds(url.rpc, grid.dim = NULL, 
     coords.origin = NULL) 
   
   cutouts.grid <- flag.bounds.ls$bounds.grid
   
   grid.dim <- dim(cutouts.grid)
   
-  infl.grid.disagg  <- TownforgeR::tf_infl_grid(url, building.type, "bonus", 
+  infl.grid.disagg  <- TownforgeR::tf_infl_grid(url.rpc, building.type, "bonus", 
     grid.dim = grid.dim, coords.origin = flag.bounds.ls$coords.origin, disaggregated = TRUE)
   
   subject.to.influence <- ( ! "error" %in% names(infl.grid.disagg) )
@@ -71,7 +71,7 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
       #waitress$update(
       #  html = paste0("Expanding flag from candidate grid point ", i.candidate, " of ", length(candidates.ls), ""))
       
-      waitress$set(i.candidate / length(candidates.ls))
+      waitress$set(i.candidate / length(candidates.ls) / 1.02)
       
       shiny::setProgress(
         value = i.candidate / length(candidates.ls),
@@ -113,7 +113,7 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
           north.coord <- north.coord + 1
           
           candidates.ls[[i.candidate]][[length(candidates.ls[[i.candidate]]) + 1]] <- 
-            TownforgeR::tf_expand_search_flag(url, flag.bounds.ls, infl.grid.disagg, 
+            TownforgeR::tf_expand_search_flag(url.rpc, flag.bounds.ls, infl.grid.disagg, 
               west.coord, south.coord, east.coord, north.coord, init.lat, init.long, role.id, 
               economic.power, city, subject.to.influence, get.flag.cost, infl.thresholds)
         }
@@ -129,7 +129,7 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
           east.coord <- east.coord + 1
           
           candidates.ls[[i.candidate]][[length(candidates.ls[[i.candidate]]) + 1]] <- 
-            TownforgeR::tf_expand_search_flag(url, flag.bounds.ls, infl.grid.disagg, 
+            TownforgeR::tf_expand_search_flag(url.rpc, flag.bounds.ls, infl.grid.disagg, 
               west.coord, south.coord, east.coord, north.coord, init.lat, init.long, role.id, 
               economic.power, city, subject.to.influence, get.flag.cost, infl.thresholds)
         }
@@ -146,7 +146,7 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
           south.coord <- south.coord - 1
           
           candidates.ls[[i.candidate]][[length(candidates.ls[[i.candidate]]) + 1]] <- 
-            TownforgeR::tf_expand_search_flag(url, flag.bounds.ls, infl.grid.disagg, 
+            TownforgeR::tf_expand_search_flag(url.rpc, flag.bounds.ls, infl.grid.disagg, 
               west.coord, south.coord, east.coord, north.coord, init.lat, init.long, role.id, 
               economic.power, city, subject.to.influence, get.flag.cost, infl.thresholds)
         }
@@ -162,7 +162,7 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
           west.coord <- west.coord - 1
           
           candidates.ls[[i.candidate]][[length(candidates.ls[[i.candidate]]) + 1]] <- 
-            TownforgeR::tf_expand_search_flag(url, flag.bounds.ls, infl.grid.disagg, 
+            TownforgeR::tf_expand_search_flag(url.rpc, flag.bounds.ls, infl.grid.disagg, 
               west.coord, south.coord, east.coord, north.coord, init.lat, init.long, role.id, 
               economic.power, city, subject.to.influence, get.flag.cost, infl.thresholds)
         }
@@ -207,7 +207,7 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
 #'
 #' Calculates matrix of best flag(s) map
 #'
-#' @param url TODO
+#' @param url.rpc TODO
 #' @param candidates.df TODO
 #' @param chosen.item.id TODO
 #' @param number.of.top.candidates TODO
@@ -221,7 +221,7 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
 #'
 #' @export
 #' @import Matrix
-tf_get_best_flag_map <-  function(url, candidates.df, chosen.item.id, 
+tf_get_best_flag_map <-  function(url.rpc, candidates.df, chosen.item.id, 
   number.of.top.candidates, display.perimeter = TRUE) {
   
    #<- 256
@@ -238,7 +238,7 @@ tf_get_best_flag_map <-  function(url, candidates.df, chosen.item.id,
   candidates.df <- candidates.df[order(candidates.df[, paste0("ROI.item_", chosen.item.id)], decreasing = TRUE), ]
   candidates.df <- candidates.df[seq_len(min(c(number.of.top.candidates, nrow(candidates.df)))), ]
   
-  flag.bounds.ls <- tf_flag_bounds(url, grid.dim = NULL, coords.origin = NULL)
+  flag.bounds.ls <- tf_flag_bounds(url.rpc, grid.dim = NULL, coords.origin = NULL)
   
   cutouts.grid <- flag.bounds.ls$bounds.grid
   
@@ -279,7 +279,7 @@ tf_get_best_flag_map <-  function(url, candidates.df, chosen.item.id,
 #'
 #' Expands a flag as tf_search_best_flags() searches
 #'
-#' @param url TODO
+#' @param url.rpc TODO
 #'
 #' @return TODO
 #'
@@ -289,11 +289,11 @@ tf_get_best_flag_map <-  function(url, candidates.df, chosen.item.id,
 #'
 #' @export
 #' @import Matrix
-tf_expand_search_flag <- function(url, flag.bounds.ls, infl.grid.disagg, 
+tf_expand_search_flag <- function(url.rpc, flag.bounds.ls, infl.grid.disagg, 
   west.coord, south.coord, east.coord, north.coord, init.lat, init.long, role.id, 
   economic.power, city, subject.to.influence, get.flag.cost, infl.thresholds) {
   
-  base.production.ls <- TownforgeR::tf_rpc_curl(url,
+  base.production.ls <- TownforgeR::tf_rpc_curl(url.rpc,
     method ="cc_get_production",
     params = list(
       city = city, 
@@ -324,7 +324,7 @@ tf_expand_search_flag <- function(url, flag.bounds.ls, infl.grid.disagg,
   infl.boost <- sum(infl.boost)
   
   if (get.flag.cost) {
-    flag.cost <- TownforgeR::tf_rpc_curl(url,
+    flag.cost <- TownforgeR::tf_rpc_curl(url.rpc,
       method ="cc_get_new_flag_cost",
       params = list(
         city = city, 

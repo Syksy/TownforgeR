@@ -2,7 +2,7 @@
 #'
 #' Plot buildings' influence map
 #'
-#' @param url TODO
+#' @param url.rpc TODO
 #' @param building.type TODO
 #' @param effect.type TODO
 #' @param cut.out.flags TODO
@@ -15,13 +15,13 @@
 #'
 #' @export
 #' @import Matrix
-tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = TRUE) {
+tf_plot_influence <- function(url.rpc, building.type, effect.type, cut.out.flags = TRUE) {
   
   stopifnot(all(building.type %in% colnames(infl.effects.ls[[1]])))
   
   stopifnot(effect.type %in% c("bonus", "need", "penalty"))
   
-  infl.grid.ls <- TownforgeR::tf_infl_grid(url, building.type = building.type, 
+  infl.grid.ls <- TownforgeR::tf_infl_grid(url.rpc, building.type = building.type, 
     effect.type = effect.type, grid.dim = NULL, coords.origin = NULL, disaggregated = FALSE)
   
   if ( ! is.null(infl.grid.ls$error)) {
@@ -33,7 +33,7 @@ tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = T
   max.effect <- max(unique.effect)
   
   if (cut.out.flags) {
-    cutouts.grid <- tf_flag_bounds(url, grid.dim = dim(infl.grid.ls$infl.grid), 
+    cutouts.grid <- tf_flag_bounds(url.rpc, grid.dim = dim(infl.grid.ls$infl.grid), 
       coords.origin = infl.grid.ls$coords.origin)$bounds.grid #dim(infl.grid)) c(2500, 2500)
     infl.grid.ls$infl.grid[cutouts.grid == 1] <- 0L
     #infl.grid2 <- infl.grid2[nrow(infl.grid2):1, ]
@@ -93,7 +93,7 @@ tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = T
 #'
 #' Get boundaries of flags
 #'
-#' @param url TODO
+#' @param url.rpc TODO
 #' @param grid.dim TODO
 #' @param coords.origin TODO
 #' @param coords.offset TODO
@@ -106,11 +106,11 @@ tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = T
 #'
 #' @export
 #' @import Matrix
-tf_flag_bounds <- function(url, grid.dim = NULL, coords.origin = NULL, coords.offset = 1000) {
+tf_flag_bounds <- function(url.rpc, grid.dim = NULL, coords.origin = NULL, coords.offset = 1000) {
   
   coords.offset <- as.integer(coords.offset)
   
-  flags.ret <- TownforgeR::tf_rpc_curl(method = "cc_get_flags", url = url)$result$flags
+  flags.ret <- TownforgeR::tf_rpc_curl(url.rpc = url.rpc, method = "cc_get_flags")$result$flags
   max.flag.id <- flags.ret[[length(flags.ret)]]$id
   
   role.names.tmp <- colnames(infl.effects.ls[[1]])
@@ -126,7 +126,7 @@ tf_flag_bounds <- function(url, grid.dim = NULL, coords.origin = NULL, coords.of
   for (i in 1:max.flag.id) {
     if (i == 21 & packageVersion("TownforgeR") == "0.0.14") { next }
     # far away flag in testnet
-    ret <- TownforgeR::tf_rpc_curl(method = "cc_get_flag", params = list(id = i), url = url)
+    ret <- TownforgeR::tf_rpc_curl(url.rpc = url.rpc, method = "cc_get_flag", params = list(id = i))
     if (any(names(ret) == "error")) { next }
     coords.mat[i, "x0"] <- ret$result$x0
     coords.mat[i, "x1"] <- ret$result$x1
@@ -187,7 +187,7 @@ tf_flag_bounds <- function(url, grid.dim = NULL, coords.origin = NULL, coords.of
 #'
 #' Get boundaries of building influence
 #'
-#' @param url TODO
+#' @param url.rpc TODO
 #' @param building.type TODO
 #' @param effect.type TODO
 #' @param disaggregated return object disaggregates matrix by building type
@@ -200,7 +200,7 @@ tf_flag_bounds <- function(url, grid.dim = NULL, coords.origin = NULL, coords.of
 #'
 #' @export
 #' @import Matrix
-tf_infl_grid <- function(url, building.type, effect.type, grid.dim, coords.origin, disaggregated = FALSE) {
+tf_infl_grid <- function(url.rpc, building.type, effect.type, grid.dim, coords.origin, disaggregated = FALSE) {
   # effect.type is "bonus" "need" or "penalty"
   infl.effects.mat <- infl.effects.ls[[effect.type]]
   # infl.effects.ls comes from package's data
@@ -212,7 +212,7 @@ tf_infl_grid <- function(url, building.type, effect.type, grid.dim, coords.origi
     return(list(error = "ERROR: No influence effects for this building type"))
   }
   
-  infl.grid.ls <- TownforgeR::tf_infl_location(url = url, building.type = names(na.omit(infl.effects.v)), 
+  infl.grid.ls <- TownforgeR::tf_infl_location(url.rpc = url.rpc, building.type = names(na.omit(infl.effects.v)), 
     coords.origin = coords.origin, grid.dim = grid.dim)
   # TODO: more efficient for tf_infl_location to create a ngCMatrix or have dgCMatrix with 1's? how does it affect Reduce("+",) ?
   if ( length(infl.grid.ls$geo) == 0) {
@@ -258,7 +258,7 @@ tf_infl_grid <- function(url, building.type, effect.type, grid.dim, coords.origi
 #'
 #' Get boundaries of building influence
 #'
-#' @param url TODO
+#' @param url.rpc TODO
 #' @param building.type TODO
 #' @param coords.origin TODO
 #' @param grid.dim TODO
@@ -272,7 +272,7 @@ tf_infl_grid <- function(url, building.type, effect.type, grid.dim, coords.origi
 #'
 #' @export
 #' @import Matrix
-tf_infl_location <- function(url, building.type = "all", coords.origin = NULL, grid.dim = NULL, coords.offset = 1000) {
+tf_infl_location <- function(url.rpc, building.type = "all", coords.origin = NULL, grid.dim = NULL, coords.offset = 1000) {
   # Remember coords.offset is 1000! Provides buffer so influence range doesn't go below zero
   # prevents problems with integers being too large. Avoids:
   # "NAs introduced by coercion to integer range"
@@ -306,9 +306,9 @@ tf_infl_location <- function(url, building.type = "all", coords.origin = NULL, g
     building.type <- role.names[building.type]
   }
   
-  # url <- "http://127.0.0.1:28881/json_rpc"
+  # url.rpc <- "http://127.0.0.1:28881/json_rpc"
   
-  flags.ret <- TownforgeR::tf_rpc_curl(method = "cc_get_flags", url = url)$result$flags
+  flags.ret <- TownforgeR::tf_rpc_curl(url.rpc = url.rpc, method = "cc_get_flags")$result$flags
   max.flag.id <- flags.ret[[length(flags.ret)]]$id
   
   coords.mat <- matrix(NA_real_, nrow = max.flag.id, ncol = 4, dimnames = list(NULL, c("x0", "x1", "y0", "y1")) )
@@ -319,7 +319,7 @@ tf_infl_location <- function(url, building.type = "all", coords.origin = NULL, g
   
   for (i in 1:max.flag.id) {
     if (i == 21 & packageVersion("TownforgeR") == "0.0.14") { next }
-    ret <- TownforgeR::tf_rpc_curl(method = "cc_get_flag", params = list(id = i), url = url)
+    ret <- TownforgeR::tf_rpc_curl(url.rpc = url.rpc, method = "cc_get_flag", params = list(id = i))
     if (any(names(ret) == "error")) { next }
     if ( ! ret$result$role %in% building.type) { next }
     # TODO: want to check if ret$result$active == TRUE
