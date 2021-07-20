@@ -21,7 +21,8 @@ tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = T
   
   stopifnot(effect.type %in% c("bonus", "need", "penalty"))
   
-  infl.grid.ls <- tf_infl_grid(url = url, building.type = building.type, effect.type = effect.type)
+  infl.grid.ls <- TownforgeR::tf_infl_grid(url, building.type = building.type, 
+    effect.type = effect.type, grid.dim = NULL, coords.origin = NULL, disaggregated = FALSE)
   
   if ( ! is.null(infl.grid.ls$error)) {
     plot(0, 0, type = "n", main = infl.grid.ls$error, cex.main = 1)
@@ -53,14 +54,14 @@ tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = T
       Matrix::image(infl.grid.ls$infl.grid, useRaster = TRUE, 
         col.regions = hcl.colors(max.effect, palette = "Hawaii", rev = TRUE), 
         colorkey = list(tick.number = max.effect), cuts = max.effect - 1,
-        main = paste0("Production boost for ", building.type, ", in percent") )
+        main = paste0("Production boost for ", names(building.names.v)[building.names.v == building.type], ", in percent") )
       # useRaster = TRUE is faster
       # ALSO: useRaster flips the chart vertically.
       
     },
     need = {
       Matrix::image(infl.grid.ls$infl.grid, useRaster = TRUE,
-        main = paste0("Area where ", building.type, " is able to be built") )
+        main = paste0("Area where ", names(building.names.v)[building.names.v == building.type], " is able to be built") )
     },
     penalty = {
       infl.grid.ls$infl.grid <- infl.grid.ls$infl.grid * (-5)
@@ -69,7 +70,7 @@ tf_plot_influence <- function(url, building.type, effect.type, cut.out.flags = T
       Matrix::image(infl.grid.ls$infl.grid, useRaster = TRUE, 
         col.regions = hcl.colors(max.effect, palette = "ag_GrnYl"), 
         colorkey = list(tick.number = max.effect), cuts = max.effect - 1,
-        main = paste0("Production penalty for ", building.type, ", in percent") )
+        main = paste0("Production penalty for ", names(building.names.v)[building.names.v == building.type], ", in percent") )
     }
     # TODO: military's complex effects not calculated yet. Maybe best to combined penalty and boost calculations
     # https://townforge.net/manual/
@@ -211,7 +212,7 @@ tf_infl_grid <- function(url, building.type, effect.type, grid.dim, coords.origi
     return(list(error = "ERROR: No influence effects for this building type"))
   }
   
-  infl.grid.ls <- tf_infl_location(url = url, building.type = names(na.omit(infl.effects.v)), 
+  infl.grid.ls <- TownforgeR::tf_infl_location(url = url, building.type = names(na.omit(infl.effects.v)), 
     coords.origin = coords.origin, grid.dim = grid.dim)
   # TODO: more efficient for tf_infl_location to create a ngCMatrix or have dgCMatrix with 1's? how does it affect Reduce("+",) ?
   if ( length(infl.grid.ls$geo) == 0) {
