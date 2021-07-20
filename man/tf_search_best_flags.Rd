@@ -37,6 +37,7 @@ TODO
 }
 \description{
 Brute force search for flags with best production and return on investment
+f
 }
 \examples{
 c()

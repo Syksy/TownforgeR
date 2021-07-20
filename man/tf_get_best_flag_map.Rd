@@ -9,7 +9,6 @@ tf_get_best_flag_map(
   candidates.df,
   chosen.item.id,
   number.of.top.candidates,
-  building.type,
   display.perimeter = TRUE
 )
 }
@@ -21,8 +20,6 @@ tf_get_best_flag_map(
 \item{chosen.item.id}{TODO}
 
 \item{number.of.top.candidates}{TODO}
-
-\item{building.type}{TODO}
 
 \item{display.perimeter}{TODO}
 }

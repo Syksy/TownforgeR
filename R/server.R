@@ -20,6 +20,11 @@ serverTF <- function(input, output, session){
   # https://rstudio.github.io/bslib/articles/bslib.html#dynamic-theming
   
   
+  session.vars <- shiny::reactiveValues(
+    wallet_rpc_port = "",
+    best.flag.candidates.ls = NULL)
+  
+  
   # Need to load select options on the run
   shiny::updateSelectInput(session, "item_inspect",
     choices = TownforgeR:::formatNFTs(url = url)
@@ -77,7 +82,7 @@ serverTF <- function(input, output, session){
     ret
   })
   
-  session.vars <- shiny::reactiveValues(wallet_rpc_port = "")
+  
   
   shiny::observeEvent(input$port_submit_button, {
     
@@ -238,17 +243,19 @@ serverTF <- function(input, output, session){
     print(number.of.top.candidates)
     print(chosen.item.id)
     
-    candidates.df <-  shiny::withProgress(message = "Searching for best flag placements...", {
+    session.vars$best.flag.candidates.ls <- shiny::withProgress(message = "Searching for best flag placements...", {
       TownforgeR::tf_search_best_flags(url, 
         building.type = building.type, economic.power = economic.power, 
-        get.flag.cost = TRUE, city = city, grid.density.params = c(3, 3), in.shiny = TRUE,
+        get.flag.cost = TRUE, city = city, grid.density.params = c(10, 10), in.shiny = TRUE,
         waitress = waitress)
     })
+    
+    candidates.df <- session.vars$best.flag.candidates.ls$candidates.df
     
     #print(str(candidates.df))
     
     best.flag.map.ls <- tf_get_best_flag_map(url, candidates.df, chosen.item.id, 
-      number.of.top.candidates, building.type, display.perimeter = TRUE)
+      number.of.top.candidates, display.perimeter = TRUE)
     
     #cat("\n mmmmmmmm \n")
     #print(str(best.flag.map.ls))

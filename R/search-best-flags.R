@@ -1,7 +1,7 @@
 #' tf_search_best_flags
 #'
 #' Brute force search for flags with best production and return on investment
-#'
+#'f
 #' @param url TODO
 #' @param building.type TODO
 #' @param economic.power TODO
@@ -196,7 +196,7 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
       candidates.df[, paste0("total.production.item_", item.num)] / candidates.df$flag.cost
   }
   
-  candidates.df
+  list(candidates.df = candidates.df, flag.bounds.ls = flag.bounds.ls)
 }
 
 
@@ -211,7 +211,6 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
 #' @param candidates.df TODO
 #' @param chosen.item.id TODO
 #' @param number.of.top.candidates TODO
-#' @param building.type TODO
 #' @param display.perimeter TODO
 #'
 #' @return TODO
@@ -223,7 +222,7 @@ tf_search_best_flags <- function(url, building.type, economic.power, get.flag.co
 #' @export
 #' @import Matrix
 tf_get_best_flag_map <-  function(url, candidates.df, chosen.item.id, 
-  number.of.top.candidates, building.type, display.perimeter = TRUE) {
+  number.of.top.candidates, display.perimeter = TRUE) {
   
    #<- 256
    #<- 3
