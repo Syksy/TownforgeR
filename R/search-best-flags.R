@@ -102,7 +102,7 @@ tf_search_best_flags <- function(url.rpc, building.type, economic.power, get.fla
     while(expand.north || expand.east || expand.south || expand.west) {
       
       if (expand.north) {
-        if ( (north.coord - south.coord + 1 ) > 256 ||
+        if ( (north.coord - south.coord + 2 ) > 256 ||
             any(dim(cutouts.grid) < c(north.coord + 1, east.coord)) ||
             sum(cutouts.grid[south.coord:(north.coord + 1), west.coord:east.coord]) != 0 ) {
           # if the search runs grows bigger than maximum allowed size, goes into an existing flag or  
@@ -120,7 +120,7 @@ tf_search_best_flags <- function(url.rpc, building.type, economic.power, get.fla
       }
       
       if (expand.east) {
-        if (  (east.coord - west.coord + 1) > 256 ||
+        if (  (east.coord - west.coord + 2) > 256 ||
             any(dim(cutouts.grid) < c(north.coord, east.coord + 1)) ||
             sum(cutouts.grid[south.coord:north.coord, west.coord:(east.coord + 1)]) != 0 ) {
           expand.east <- FALSE
@@ -136,7 +136,7 @@ tf_search_best_flags <- function(url.rpc, building.type, economic.power, get.fla
       }
       
       if (expand.south) {
-        if ( (north.coord - south.coord + 1) > 256 ||
+        if ( (north.coord - south.coord + 2) > 256 ||
             any( c(south.coord - 1, west.coord) <= 0 ) ||
             sum(cutouts.grid[(south.coord - 1):north.coord, west.coord:east.coord]) != 0 ) {
           # "Going off the map" for southern expansion means going zero or below
@@ -153,7 +153,7 @@ tf_search_best_flags <- function(url.rpc, building.type, economic.power, get.fla
       }
       
       if (expand.west) {
-        if (  (east.coord - west.coord + 1) > 256 ||
+        if (  (east.coord - west.coord + 2) > 256 ||
             any( c(south.coord, west.coord - 1) <= 0 ) ||
             sum(cutouts.grid[south.coord:north.coord, (west.coord - 1):east.coord]) != 0 ) {
           expand.west <- FALSE
