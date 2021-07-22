@@ -7,6 +7,7 @@
 serverTF <- function(input, output, session){
   
   waitress <- waiter::Waitress$new(theme = "overlay-percent", min = 0, max = 1)
+  waiter <- waiter::Waiter$new()
   
   url.townforged <- shiny::getShinyOption("url.townforged", stop("townforged RPC URL not set!"))
   # Grabs url.rpc argument from shinyTF()
@@ -24,7 +25,7 @@ serverTF <- function(input, output, session){
     wallet_rpc_port = "",
     best.flag.candidates.ls = NULL,
     cities = TownforgeR::tf_parse_cities(url.townforged)
-    )
+  )
   
   
   
@@ -98,7 +99,7 @@ serverTF <- function(input, output, session){
     #print(wallet_balance)
     
     output$wallet_balance_text <-
-      shiny::renderText(paste0( "Total balance: ", prettyNum(wallet_balance$result$balance / gold.unit.divisor, big.mark = ","),
+      shiny::renderText(paste0( "Wallet balance: ", prettyNum(wallet_balance$result$balance / gold.unit.divisor, big.mark = ","),
         "<br>In-game account balance: ",  prettyNum(wallet_balance$result$cc_balance / gold.unit.divisor, big.mark = ",") ) )
     
     output$wallet_init_disappears <- shiny::reactive(TRUE)
@@ -223,9 +224,9 @@ serverTF <- function(input, output, session){
   })
   
   shiny::observeEvent(input$influence_button, {
-  
-      output$influence_chart <- shiny::renderPlot({
-        shiny::withProgress(message = "Calculating influence...", {
+    
+    output$influence_chart <- shiny::renderPlot({
+      shiny::withProgress(message = "Calculating influence...", {
         isolate(TownforgeR::tf_plot_influence(url.rpc = url.townforged, 
           input$building_type, input$effect_type, input$cut_out_flags) )
       })
@@ -243,7 +244,7 @@ serverTF <- function(input, output, session){
     shiny::updateSelectInput(session, "optimize_flag_city", 
       choices = session.vars$cities$cities.v)
   })
-
+  
   shiny::observeEvent(input$optimize_flag_button, {
     
     waitress$start(h3("Calculating flag production..."))
@@ -274,6 +275,8 @@ serverTF <- function(input, output, session){
     best.flag.map.ls <- TownforgeR::tf_get_best_flag_map(url.rpc = url.townforged, 
       candidates.df, chosen.item.id, number.of.top.candidates, display.perimeter = TRUE)
     
+    session.vars$best.flag.candidates.ls$candidates.df <- best.flag.map.ls$candidates.df
+    
     #cat("\n mmmmmmmm \n")
     #print(str(best.flag.map.ls))
     
@@ -298,7 +301,7 @@ serverTF <- function(input, output, session){
       text(
         best.flag.map.ls$candidates.df$x0/best.flag.map.mat.dim[1], 
         best.flag.map.ls$candidates.df$y0/best.flag.map.mat.dim[2], 
-        labels = LETTERS[seq_len(nrow(best.flag.map.ls$candidates.df))],
+        labels = c(LETTERS, letters)[seq_len(nrow(best.flag.map.ls$candidates.df))],
         cex = 2, xpd = NA) # font = 2 is bold font
       
       par(mar = c(5, 4, 4, 2) + 0.1)
@@ -313,10 +316,75 @@ serverTF <- function(input, output, session){
       options = list(dom = "Bfrtip", buttons = I("colvis"), colReorder = list(realtime = FALSE)) )
     # https://rstudio.github.io/DT/extensions.html
     
+    # https://shiny.rstudio.com/articles/dynamic-ui.html
+    output$optimize_flag_buy_flag_ui <- shiny::renderUI({
+      shiny::tagList(
+        shiny::checkboxGroupInput("optimize_flag_buy_flag_input", "Choose flag(s) to buy and build upon", 
+          choices = best.flag.map.ls$candidates.df$label, inline = TRUE),
+        shiny::actionButton("buy_optimized_flag_button", "Buy and build selected flag(s)"),
+        shiny::verbatimTextOutput("optimize_flag_buy_tx_hash")
+      )
+    })
+    
     waitress$close() 
     
   })
   
   
-  
+  shiny::observeEvent(input$buy_optimized_flag_button, {
+    
+    if (session.vars$wallet_rpc_port == "") {
+      stop("TownforgeR not connected to wallet.")
+    }
+    
+    waiter$show()
+    
+    #  session.vars$best.flag.candidates.ls$candidates.df
+    #  session.vars$best.flag.candidates.ls$flag.bounds.ls$coords.origin
+    # list(candidates.df = candidates.df, flag.bounds.ls = flag.bounds.ls)
+    cat("\n\nBUYING...\n\n")
+    
+    
+    flags.to.buy.df <- session.vars$best.flag.candidates.ls$candidates.df
+    print(flags.to.buy.df$label)
+    print(input$optimize_flag_buy_flag_input)
+    flags.to.buy.df <- flags.to.buy.df[flags.to.buy.df$label %in% input$optimize_flag_buy_flag_input, , drop = FALSE]
+    print(flags.to.buy.df)
+    # stop()
+    
+    TownforgeR::tf_buy_flags(url.wallet = paste0("http://127.0.0.1:", session.vars$wallet_rpc_port, "/json_rpc"), 
+      flags.to.buy.df = flags.to.buy.df, 
+      coords.origin = session.vars$best.flag.candidates.ls$flag.bounds.ls$coords.origin,
+      city = session.vars$best.flag.candidates.ls$city)
+    cat("\n\nBOUGHT...?\n\n")
+    
+    build.tx.hashes.v <- c()
+    
+    while(nrow(flags.to.buy.df) > 0) {
+      # print(flags.to.buy.df)
+      #browser()
+      tf.build.buildings.ret <- TownforgeR::tf_build_buildings(url.townforged = url.townforged, 
+        url.wallet = paste0("http://127.0.0.1:", session.vars$wallet_rpc_port, "/json_rpc"),
+        flags.to.buy.df = flags.to.buy.df, 
+        build.tx.hashes.v = build.tx.hashes.v, 
+        building.type = session.vars$best.flag.candidates.ls$building.type, 
+        economic.power = session.vars$best.flag.candidates.ls$economic.power, 
+        coords.origin = session.vars$best.flag.candidates.ls$flag.bounds.ls$coords.origin,
+        city = session.vars$best.flag.candidates.ls$city)
+      
+      flags.to.buy.df <- tf.build.buildings.ret$flags.to.buy.df
+      build.tx.hashes.v <- tf.build.buildings.ret$build.tx.hashes.v
+      
+      Sys.sleep(10)
+    }
+    
+    output$optimize_flag_buy_tx_hash <- shiny::renderText( 
+      c("Sucessfully purchased flag(s) and built building(s)!",
+      paste0("Building transaction hash: https://explorer.townforge.net/tx/", build.tx.hashes.v) )
+    )
+      
+      waiter$hide()
+      
+  })
+    
 }

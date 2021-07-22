@@ -4,7 +4,6 @@
 #' Shiny UI for browser
 #'
 #' Description
-#' 
 
 load("R/sysdata.rda")
 # A little hacky, but it's the only way I can get package to build.
@@ -161,6 +160,7 @@ uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("T
   ),
   shiny::tabPanel("Optimize Flag", # building.type, effect.type, cut.out.flags 
     waiter::use_waitress(),
+    waiter::use_waiter(),
     shiny::selectInput("optimize_flag_building_type", "Building type:", 
       choices = building.names.v[building.names.v %in% 
           commodities.buildings.produce.df$building.abbrev[! is.na(commodities.buildings.produce.df$building.abbrev)] ] ),
@@ -177,6 +177,9 @@ uiTF <- shiny::navbarPage(paste("TownforgeR", gsub("`|´", "", packageVersion("T
     shiny::sliderInput("optimize_flag_grid_density", "Density of grid search points (3 = about 5 minutes search time; 10 ≈ 30 minutes):",
       min = 2, max = 10, value = 3, step = 1),
     shiny::actionButton("optimize_flag_button", "Search for best flag placements"),
+    shiny::br(),
+    shiny::br(),
+    shiny::uiOutput("optimize_flag_buy_flag_ui"),
     shiny::br(),
     shiny::br(),
     DT::dataTableOutput("optimize_flag_table"),

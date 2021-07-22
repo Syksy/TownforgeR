@@ -2,6 +2,8 @@
 
 export(shinyTF)
 export(test.mat.image)
+export(tf_build_buildings)
+export(tf_buy_flags)
 export(tf_expand_search_flag)
 export(tf_flag_bounds)
 export(tf_get_best_flag_map)

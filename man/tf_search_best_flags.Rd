@@ -9,7 +9,7 @@ tf_search_best_flags(
   building.type,
   economic.power,
   get.flag.cost = TRUE,
-  city = 0,
+  city,
   grid.density.params = c(10, 10),
   in.shiny = FALSE,
   waitress = NULL
