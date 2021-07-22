@@ -5,7 +5,7 @@
 \title{tf_infl_location}
 \usage{
 tf_infl_location(
-  url,
+  url.rpc,
   building.type = "all",
   coords.origin = NULL,
   grid.dim = NULL,
@@ -13,7 +13,7 @@ tf_infl_location(
 )
 }
 \arguments{
-\item{url}{TODO}
+\item{url.rpc}{TODO}
 
 \item{building.type}{TODO}
 

@@ -40,15 +40,15 @@ min.size.scale.df <- TownforgeR::tf_get_min_flag_size_data()
 save(min.size.scale.df, file = "data/min_size_scale_df.rda")
 
 commodity.id.key <- as.data.frame(matrix(c(
-  1, "Sandstone",
-  2, "Granite",
-  3, "Marble",
-  4, "Pine",
-  5, "Oak",
-  6, "Teak",
-  8, "Runestone",
-  256, "Labour",
-  257, "Firewood",
+  1,    "Sandstone",
+  2,    "Granite",
+  3,    "Marble",
+  4,    "Pine",
+  5,    "Oak",
+  6,    "Teak",
+  8,    "Runestone",
+  256,  "Labour",
+  257,  "Firewood",
   1024, "Vegetables",
   1025, "Grain",
   1026, "Meat",
@@ -64,12 +64,36 @@ names(commodity.id.key.v) <- commodity.id.key$name
 
 save(commodity.id.key.v, file = "data/commodity_id_key_v.rda")
 
+
+commodities.buildings.produce.df <- as.data.frame(matrix(c(
+  1,    "Sandstone",   10, "STO",
+  2,    "Granite",     10, "STO",
+  3,    "Marble",      10, "STO",
+  4,    "Pine",        11, "SAW",
+  5,    "Oak",         11, "SAW",
+  6,    "Teak",        11, "SAW",
+  8,    "Runestone",   NA, NA,
+  256,  "Labour",      14, "WOR",
+  257,  "Firewood",    NA, NA,
+  1024, "Vegetables",  NA, NA,
+  1025, "Grain",       NA, NA,
+  1026, "Meat",        NA, NA,
+  1027, "Salted meat", NA, NA
+), ncol = 4, byrow = TRUE))
+colnames(commodities.buildings.produce.df) <- c("commodity.id", "commodity.name", "building.id", "building.abbrev")
+commodities.buildings.produce.df$commodity.id <- as.numeric(commodities.buildings.produce.df$commodity.id)
+commodities.buildings.produce.df$building.id <- as.numeric(commodities.buildings.produce.df$building.id)
+
+save(commodities.buildings.produce.df, file = "data/commodities_buildings_produce_df.rda")
+
+
 gold.unit.divisor <- 10e+7
 
 save(gold.unit.divisor, file = "data/gold_unit_divisor.rda")
 
 save(infl.effects.ls, building.names.df, building.names.v, min.size.scale.df, 
-  commodity.id.key, commodity.id.key.v, gold.unit.divisor, file = "R/sysdata.rda")
+  commodity.id.key, commodity.id.key.v, commodities.buildings.produce.df,
+  gold.unit.divisor, file = "R/sysdata.rda")
 
 
 # 1 = ag

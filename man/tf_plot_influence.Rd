@@ -4,10 +4,10 @@
 \alias{tf_plot_influence}
 \title{tf_plot_influence}
 \usage{
-tf_plot_influence(url, building.type, effect.type, cut.out.flags = TRUE)
+tf_plot_influence(url.rpc, building.type, effect.type, cut.out.flags = TRUE)
 }
 \arguments{
-\item{url}{TODO}
+\item{url.rpc}{TODO}
 
 \item{building.type}{TODO}
 

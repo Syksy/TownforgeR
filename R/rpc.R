@@ -2,7 +2,7 @@
 #'
 #' Description
 #'
-#' @param url TODO
+#' @param url.rpc TODO
 #' @param method One of: '
 #' @param	params TODO
 #' @param	num.as.string TODO
@@ -16,7 +16,7 @@
 #' @export
 tf_rpc_curl <- function(
 	# URL for TF RPC connection
-	url = "http://127.0.0.1:18881/json_rpc", 
+  url.rpc = "http://127.0.0.1:18881/json_rpc", 
 	# Premade JSON template; method and params
 	# From daemon.py functions:
 	# - getblocktemplate(self, address, prev_block = "", game_account_key = "", client = ""):
@@ -166,7 +166,7 @@ tf_rpc_curl <- function(
   }
   
   
-  rcp.ret <- 	tryCatch(RCurl::postForm(url,
+  rcp.ret <- 	tryCatch(RCurl::postForm(url.rpc,
     .opts = list(
       postfields = json.ret,
       httpheader = c('Content-Type' = 'application/json', Accept = 'application/json')
@@ -176,7 +176,7 @@ tf_rpc_curl <- function(
   
   if (keep.trying.rpc && length(rcp.ret) == 0) {
     while (length(rcp.ret) == 0) {
-      rcp.ret <- 	tryCatch(RCurl::postForm(url,
+      rcp.ret <- 	tryCatch(RCurl::postForm(url.rpc,
         .opts = list(
           postfields = json.ret,
           httpheader = c('Content-Type' = 'application/json', Accept = 'application/json')

@@ -5,24 +5,21 @@
 \title{tf_get_best_flag_map}
 \usage{
 tf_get_best_flag_map(
-  url,
+  url.rpc,
   candidates.df,
   chosen.item.id,
   number.of.top.candidates,
-  building.type,
   display.perimeter = TRUE
 )
 }
 \arguments{
-\item{url}{TODO}
+\item{url.rpc}{TODO}
 
 \item{candidates.df}{TODO}
 
 \item{chosen.item.id}{TODO}
 
 \item{number.of.top.candidates}{TODO}
-
-\item{building.type}{TODO}
 
 \item{display.perimeter}{TODO}
 }

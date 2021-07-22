@@ -7,9 +7,10 @@
 serverTF <- function(input, output, session){
   
   waitress <- waiter::Waitress$new(theme = "overlay-percent", min = 0, max = 1)
+  waiter <- waiter::Waiter$new()
   
-  url <- shiny::getShinyOption("url", url)
-  # Grabs url argument from shinyTF()
+  url.townforged <- shiny::getShinyOption("url.townforged", stop("townforged RPC URL not set!"))
+  # Grabs url.rpc argument from shinyTF()
   # Thanks to https://stackoverflow.com/questions/49470474/saving-r-shiny-app-as-a-function-with-arguments-passed-to-the-shiny-app
   
   light <- bslib::bs_theme(bootswatch = "minty")
@@ -20,9 +21,18 @@ serverTF <- function(input, output, session){
   # https://rstudio.github.io/bslib/articles/bslib.html#dynamic-theming
   
   
+  session.vars <- shiny::reactiveValues(
+    wallet_rpc_port = "",
+    best.flag.candidates.ls = NULL,
+    cities = TownforgeR::tf_parse_cities(url.townforged)
+  )
+  
+  
+  
+  
   # Need to load select options on the run
   shiny::updateSelectInput(session, "item_inspect",
-    choices = TownforgeR:::formatNFTs(url = url)
+    choices = TownforgeR:::formatNFTs(url.rpc = url.townforged)
   )
   
   output$pars <- shiny::renderUI({
@@ -38,7 +48,7 @@ serverTF <- function(input, output, session){
   })
   output$verb <- shiny::renderPrint({
     TownforgeR::tf_rpc_curl(
-      url = url,
+      url.rpc = url.townforged,
       method = input$command,
       params = TownforgeR:::pruneList(
         list(
@@ -52,19 +62,19 @@ serverTF <- function(input, output, session){
     )
   })
   output$accountsDT <- DT::renderDataTable({
-    TownforgeR::tf_parse_accounts(url = url)
+    TownforgeR::tf_parse_accounts(url.rpc = url.townforged)
   })
   output$marketsDT <- DT::renderDataTable({
-    TownforgeR::tf_parse_markets(url = url)
+    TownforgeR::tf_parse_markets(url.rpc = url.townforged)
   })
   output$nftsDT <- DT::renderDataTable({
-    TownforgeR::tf_parse_nfts(url = url)
+    TownforgeR::tf_parse_nfts(url.rpc = url.townforged)
   })
   output$network <- shiny::renderPrint({
-    TownforgeR::tf_parse_network(url = url)
+    TownforgeR::tf_parse_network(url.rpc = url.townforged)
   })
   output$inspect_item <- shiny::renderText({
-    items <- TownforgeR::tf_parse_nfts(url = url)
+    items <- TownforgeR::tf_parse_nfts(url.rpc = url.townforged)
     items <- items[which(paste(items$id, ":", items$name) == input$item_inspect),]
     ret <- ifelse(items$ipfs_multihash=="",
       # Not an IPFS NFT, return ordinary HTML formatting
@@ -77,20 +87,20 @@ serverTF <- function(input, output, session){
     ret
   })
   
-  session.vars <- shiny::reactiveValues(wallet_rpc_port = "")
+  
   
   shiny::observeEvent(input$port_submit_button, {
     
     session.vars$wallet_rpc_port <- input$port_wallet_rpc
     
-    wallet_balance <- TownforgeR::tf_rpc_curl(url = paste0("http://127.0.0.1:", session.vars$wallet_rpc_port, "/json_rpc"),
+    wallet_balance <- TownforgeR::tf_rpc_curl(url.rpc = paste0("http://127.0.0.1:", session.vars$wallet_rpc_port, "/json_rpc"),
       method ="get_balance")
     
     #print(wallet_balance)
     
     output$wallet_balance_text <-
-      shiny::renderText(paste0( "Total balance: ", prettyNum(wallet_balance$result$balance / 1e+06, big.mark = ","),
-        "<br>In-game account balance: ",  prettyNum(wallet_balance$result$cc_balance / 1e+06, big.mark = ",") ) )
+      shiny::renderText(paste0( "Wallet balance: ", prettyNum(wallet_balance$result$balance / gold.unit.divisor, big.mark = ","),
+        "<br>In-game account balance: ",  prettyNum(wallet_balance$result$cc_balance / gold.unit.divisor, big.mark = ",") ) )
     
     output$wallet_init_disappears <- shiny::reactive(TRUE)
     
@@ -109,12 +119,12 @@ serverTF <- function(input, output, session){
     shiny::withProgress(message = "Starting townforge-wallet-rpc...", Sys.sleep(10))
     # Wait for townforge-wallet-rpc to boot up
     
-    wallet_balance <- TownforgeR::tf_rpc_curl(url = paste0("http://127.0.0.1:", session.vars$wallet_rpc_port, "/json_rpc"),
+    wallet_balance <- TownforgeR::tf_rpc_curl(url.rpc = paste0("http://127.0.0.1:", session.vars$wallet_rpc_port, "/json_rpc"),
       method ="get_balance")
     
     output$wallet_balance_text <-
-      shiny::renderText(paste0( "Total balance: ", prettyNum(wallet_balance$result$balance / 1e+06, big.mark = ","),
-        "<br>In-game account balance: ",  prettyNum(wallet_balance$result$cc_balance / 1e+06, big.mark = ",") ) )
+      shiny::renderText(paste0( "Total balance: ", prettyNum(wallet_balance$result$balance / gold.unit.divisor, big.mark = ","),
+        "<br>In-game account balance: ",  prettyNum(wallet_balance$result$cc_balance / gold.unit.divisor, big.mark = ",") ) )
     
     output$wallet_init_disappears <- shiny::reactive(TRUE)
     
@@ -129,8 +139,8 @@ serverTF <- function(input, output, session){
   
   shiny::observeEvent(input$deposit_submit_button, {
     
-    deposit_result <- TownforgeR::tf_rpc_curl(url = paste0("http://127.0.0.1:", session.vars$wallet_rpc_port, "/json_rpc"),
-      method = "cc_deposit", params = list(amount = input$deposit_amount * 1e+06))
+    deposit_result <- TownforgeR::tf_rpc_curl(url.rpc = paste0("http://127.0.0.1:", session.vars$wallet_rpc_port, "/json_rpc"),
+      method = "cc_deposit", params = list(amount = input$deposit_amount * gold.unit.divisor))
     # FIXED: TODO: cc_deposit won't accept scientific notation, it seems, so "large" deposit amounts fail if not
     # formatted with formatC(). Need a general fix to this. maybe in tf_rpc_curl()
     
@@ -143,9 +153,9 @@ serverTF <- function(input, output, session){
     
     output$depth_chart <- shiny::renderPlot({
       
-      order.book <- TownforgeR::tf_parse_markets(url = url)
+      order.book <- TownforgeR::tf_parse_markets(url.rpc = url.townforged)
       order.book <- order.book[order.book$id == 1, ]
-      order.book$price <- order.book$price / 1e+06
+      order.book$price <- order.book$price / gold.unit.divisor
       order.book <- order.book[order(order.book$price), ]
       bids.book <- order.book[order.book$bid, ]
       offers.book <- order.book[ ! order.book$bid, ]
@@ -174,16 +184,16 @@ serverTF <- function(input, output, session){
     
     output$map_chart <- shiny::renderPlot({
       
-      flags.ret <- TownforgeR::tf_rpc_curl(method = "cc_get_flags", url = url)$result$flags
+      flags.ret <- TownforgeR::tf_rpc_curl(url.rpc = url.townforged, method = "cc_get_flags")$result$flags
       max.flag.id <- flags.ret[[length(flags.ret)]]$id
       
       coords.mat <- matrix(NA_real_, nrow = max.flag.id, ncol = 4, dimnames = list(NULL, c("x0", "x1", "y0", "y1")) )
       owner.id <- vector(mode = "numeric", length = max.flag.id)
       
       for (i in 1:max.flag.id) {
-        if (i == 21 & packageVersion("TownforgeR") == "0.0.14") { next }
+        if (i == 21 & packageVersion("TownforgeR") == "0.0.15") { next }
         # far away flag in testnet
-        ret <- TownforgeR::tf_rpc_curl(method = "cc_get_flag", params = list(id = i), url = url)
+        ret <- TownforgeR::tf_rpc_curl(url.rpc = url.townforged, method = "cc_get_flag", params = list(id = i))
         if (any(names(ret) == "error")) { next }
         coords.mat[i, "x0"] <- ret$result$x0
         coords.mat[i, "x1"] <- ret$result$x1
@@ -199,7 +209,7 @@ serverTF <- function(input, output, session){
       owner.df <- unique(owner.df)
       
       for (i in unique(owner.id)) {
-        ret <- TownforgeR::tf_rpc_curl(method = "cc_get_account", params = list(id = i), url = url)
+        ret <- TownforgeR::tf_rpc_curl(url.rpc = url.townforged, method = "cc_get_account", params = list(id = i))
         if (any(names(ret) == "error")) { next }
         owner.df$owner.name[owner.df$owner.id == i] <- ret$result$name
       }
@@ -214,12 +224,25 @@ serverTF <- function(input, output, session){
   })
   
   shiny::observeEvent(input$influence_button, {
-  
-      output$influence_chart <- shiny::renderPlot({
-        shiny::withProgress(message = "Calculating influence...", {
-        isolate(TownforgeR::tf_plot_influence(url, input$building_type, input$effect_type, input$cut_out_flags) )
+    
+    output$influence_chart <- shiny::renderPlot({
+      shiny::withProgress(message = "Calculating influence...", {
+        isolate(TownforgeR::tf_plot_influence(url.rpc = url.townforged, 
+          input$building_type, input$effect_type, input$cut_out_flags) )
       })
     })
+  })
+  
+  observe({
+    shiny::updateSelectInput(session, "optimize_flag_chosen_item_id", 
+      choices = commodity.id.key.v[commodity.id.key.v %in% 
+          commodities.buildings.produce.df$commodity.id[ 
+            commodities.buildings.produce.df$building.abbrev %in% input$optimize_flag_building_type] ])
+  })
+  
+  observe({
+    shiny::updateSelectInput(session, "optimize_flag_city", 
+      choices = session.vars$cities$cities.v)
   })
   
   shiny::observeEvent(input$optimize_flag_button, {
@@ -231,24 +254,28 @@ serverTF <- function(input, output, session){
     number.of.top.candidates <- input$optimize_flag_number_of_top_candidates
     building.type <- input$optimize_flag_building_type
     economic.power <- as.numeric(input$optimize_flag_economic_power)
-    city <- 0
+    city <- as.numeric(input$optimize_flag_city)
     # "http://127.0.0.1:28881/json_rpc"
     print(building.type)
     print(economic.power)
     print(number.of.top.candidates)
     print(chosen.item.id)
     
-    candidates.df <-  shiny::withProgress(message = "Searching for best flag placements...", {
-      TownforgeR::tf_search_best_flags(url, 
+    session.vars$best.flag.candidates.ls <- shiny::withProgress(message = "Searching for best flag placements...", {
+      TownforgeR::tf_search_best_flags(url.rpc = url.townforged, 
         building.type = building.type, economic.power = economic.power, 
-        get.flag.cost = TRUE, city = city, grid.density.params = c(3, 3), in.shiny = TRUE,
-        waitress = waitress)
+        get.flag.cost = TRUE, city = city, grid.density.params = rep(input$optimize_flag_grid_density, 2), 
+        in.shiny = TRUE, waitress = waitress)
     })
+    
+    candidates.df <- session.vars$best.flag.candidates.ls$candidates.df
     
     #print(str(candidates.df))
     
-    best.flag.map.ls <- tf_get_best_flag_map(url, candidates.df, chosen.item.id, 
-      number.of.top.candidates, building.type, display.perimeter = TRUE)
+    best.flag.map.ls <- TownforgeR::tf_get_best_flag_map(url.rpc = url.townforged, 
+      candidates.df, chosen.item.id, number.of.top.candidates, display.perimeter = TRUE)
+    
+    session.vars$best.flag.candidates.ls$candidates.df <- best.flag.map.ls$candidates.df
     
     #cat("\n mmmmmmmm \n")
     #print(str(best.flag.map.ls))
@@ -274,7 +301,7 @@ serverTF <- function(input, output, session){
       text(
         best.flag.map.ls$candidates.df$x0/best.flag.map.mat.dim[1], 
         best.flag.map.ls$candidates.df$y0/best.flag.map.mat.dim[2], 
-        labels = LETTERS[seq_len(nrow(best.flag.map.ls$candidates.df))],
+        labels = c(LETTERS, letters)[seq_len(nrow(best.flag.map.ls$candidates.df))],
         cex = 2, xpd = NA) # font = 2 is bold font
       
       par(mar = c(5, 4, 4, 2) + 0.1)
@@ -289,10 +316,75 @@ serverTF <- function(input, output, session){
       options = list(dom = "Bfrtip", buttons = I("colvis"), colReorder = list(realtime = FALSE)) )
     # https://rstudio.github.io/DT/extensions.html
     
+    # https://shiny.rstudio.com/articles/dynamic-ui.html
+    output$optimize_flag_buy_flag_ui <- shiny::renderUI({
+      shiny::tagList(
+        shiny::checkboxGroupInput("optimize_flag_buy_flag_input", "Choose flag(s) to buy and build upon", 
+          choices = best.flag.map.ls$candidates.df$label, inline = TRUE),
+        shiny::actionButton("buy_optimized_flag_button", "Buy and build selected flag(s)"),
+        shiny::verbatimTextOutput("optimize_flag_buy_tx_hash")
+      )
+    })
+    
     waitress$close() 
     
   })
   
   
-  
+  shiny::observeEvent(input$buy_optimized_flag_button, {
+    
+    if (session.vars$wallet_rpc_port == "") {
+      stop("TownforgeR not connected to wallet.")
+    }
+    
+    waiter$show()
+    
+    #  session.vars$best.flag.candidates.ls$candidates.df
+    #  session.vars$best.flag.candidates.ls$flag.bounds.ls$coords.origin
+    # list(candidates.df = candidates.df, flag.bounds.ls = flag.bounds.ls)
+    cat("\n\nBUYING...\n\n")
+    
+    
+    flags.to.buy.df <- session.vars$best.flag.candidates.ls$candidates.df
+    print(flags.to.buy.df$label)
+    print(input$optimize_flag_buy_flag_input)
+    flags.to.buy.df <- flags.to.buy.df[flags.to.buy.df$label %in% input$optimize_flag_buy_flag_input, , drop = FALSE]
+    print(flags.to.buy.df)
+    # stop()
+    
+    TownforgeR::tf_buy_flags(url.wallet = paste0("http://127.0.0.1:", session.vars$wallet_rpc_port, "/json_rpc"), 
+      flags.to.buy.df = flags.to.buy.df, 
+      coords.origin = session.vars$best.flag.candidates.ls$flag.bounds.ls$coords.origin,
+      city = session.vars$best.flag.candidates.ls$city)
+    cat("\n\nBOUGHT...?\n\n")
+    
+    build.tx.hashes.v <- c()
+    
+    while(nrow(flags.to.buy.df) > 0) {
+      # print(flags.to.buy.df)
+      #browser()
+      tf.build.buildings.ret <- TownforgeR::tf_build_buildings(url.townforged = url.townforged, 
+        url.wallet = paste0("http://127.0.0.1:", session.vars$wallet_rpc_port, "/json_rpc"),
+        flags.to.buy.df = flags.to.buy.df, 
+        build.tx.hashes.v = build.tx.hashes.v, 
+        building.type = session.vars$best.flag.candidates.ls$building.type, 
+        economic.power = session.vars$best.flag.candidates.ls$economic.power, 
+        coords.origin = session.vars$best.flag.candidates.ls$flag.bounds.ls$coords.origin,
+        city = session.vars$best.flag.candidates.ls$city)
+      
+      flags.to.buy.df <- tf.build.buildings.ret$flags.to.buy.df
+      build.tx.hashes.v <- tf.build.buildings.ret$build.tx.hashes.v
+      
+      Sys.sleep(10)
+    }
+    
+    output$optimize_flag_buy_tx_hash <- shiny::renderText( 
+      c("Sucessfully purchased flag(s) and built building(s)!",
+      paste0("Building transaction hash: https://explorer.townforge.net/tx/", build.tx.hashes.v) )
+    )
+      
+      waiter$hide()
+      
+  })
+    
 }

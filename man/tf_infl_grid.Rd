@@ -5,7 +5,7 @@
 \title{tf_infl_grid}
 \usage{
 tf_infl_grid(
-  url,
+  url.rpc,
   building.type,
   effect.type,
   grid.dim,
@@ -14,7 +14,7 @@ tf_infl_grid(
 )
 }
 \arguments{
-\item{url}{TODO}
+\item{url.rpc}{TODO}
 
 \item{building.type}{TODO}
 

@@ -5,18 +5,18 @@
 \title{tf_search_best_flags}
 \usage{
 tf_search_best_flags(
-  url,
+  url.rpc,
   building.type,
   economic.power,
   get.flag.cost = TRUE,
-  city = 0,
+  city,
   grid.density.params = c(10, 10),
   in.shiny = FALSE,
   waitress = NULL
 )
 }
 \arguments{
-\item{url}{TODO}
+\item{url.rpc}{TODO}
 
 \item{building.type}{TODO}
 
@@ -37,6 +37,7 @@ TODO
 }
 \description{
 Brute force search for flags with best production and return on investment
+f
 }
 \examples{
 c()
