@@ -422,7 +422,7 @@ tf_build_buildings <- function(url.townforged, url.wallet, flags.to.buy.df, buil
     # far away flag in testnet
     ret <- TownforgeR::tf_rpc_curl(method = "cc_get_flag", params = list(id = i), 
       url.rpc = url.townforged, keep.trying.rpc = TRUE)
-    if (any(names(ret) == "error")) { next }
+    if (any(names(ret) == "error") || ret$result$city > 0)  { next }
     coords.mat[i, "x0"] <- ret$result$x0
     coords.mat[i, "x1"] <- ret$result$x1
     coords.mat[i, "y0"] <- ret$result$y0
