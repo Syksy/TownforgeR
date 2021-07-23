@@ -127,7 +127,7 @@ tf_flag_bounds <- function(url.rpc, grid.dim = NULL, coords.origin = NULL, coord
     if (i == 21 & packageVersion("TownforgeR") == "0.0.15") { next }
     # far away flag in testnet
     ret <- TownforgeR::tf_rpc_curl(url.rpc = url.rpc, method = "cc_get_flag", params = list(id = i))
-    if (any(names(ret) == "error")) { next }
+    if (any(names(ret) == "error") || ret$result$city > 0)  { next }
     coords.mat[i, "x0"] <- ret$result$x0
     coords.mat[i, "x1"] <- ret$result$x1
     coords.mat[i, "y0"] <- ret$result$y0
@@ -320,7 +320,7 @@ tf_infl_location <- function(url.rpc, building.type = "all", coords.origin = NUL
   for (i in 1:max.flag.id) {
     if (i == 21 & packageVersion("TownforgeR") == "0.0.15") { next }
     ret <- TownforgeR::tf_rpc_curl(url.rpc = url.rpc, method = "cc_get_flag", params = list(id = i))
-    if (any(names(ret) == "error")) { next }
+    if (any(names(ret) == "error") || ret$result$city > 0)  { next }
     if ( ! ret$result$role %in% building.type) { next }
     # TODO: want to check if ret$result$active == TRUE
     coords.mat[i, "x0"] <- ret$result$x0
